@@ -1,0 +1,21 @@
+#header .wishlist-link {
+  display: none !important; }
+
+@media (min-width: 1200px) {
+  #header #header-login div.current a {
+    padding-left: 30px; } }
+#header #header-login div.current a:before {
+  color: black; }
+
+@media (max-width: 1199px) {
+  #header #header-login div.current a:before {
+    display: none; } }
+@media (min-width: 1200px) {
+  #index #header {
+    padding-top: 75px;
+    padding-bottom: 55px; } }
+
+@media (min-width: 1200px) {
+  body:not(#index) #header {
+    padding-top: 30px;
+    padding-bottom: 30px; } }
