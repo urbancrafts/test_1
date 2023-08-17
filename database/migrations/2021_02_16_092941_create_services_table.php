@@ -22,15 +22,16 @@ class CreateServicesTable extends Migration
             $table->string('price')->nullable();
             $table->text('img_1')->nullable();
             $table->longtext('images')->nullable();
-            $table->string('location')->nullable();
+            $table->string('map_location')->nullable();
             $table->text('address')->nullable();
             $table->longtext('youtube')->nullable();
             $table->string('duration')->default('hour');
-            $table->boolean('available')->default('1');
-            $table->boolean('subscribed')->default('0');
-            $table->string('sub_exp')->nullable();
-            $table->boolean('updated')->default('0');
-            $table->integer('created_by')->nullable();
+            $table->boolean('available')->default(true);
+            $table->boolean('subscribed')->default(false);
+            // $table->boolean('updated')->default(false);
+             // $table->string('sub_exp')->nullable();
+             $table->foreignId('business_id')->nullable()->constrained('business_details')->onDelete('cascade')->onUpdate('cascade');
+             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

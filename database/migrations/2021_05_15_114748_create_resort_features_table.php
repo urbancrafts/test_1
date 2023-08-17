@@ -15,7 +15,7 @@ class CreateResortFeaturesTable extends Migration
     {
         Schema::create('resort_features', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('resort_id')->nullbale();
+            $table->integer('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');
             $table->longtext('features')->nullable();
             $table->timestamps();
         });

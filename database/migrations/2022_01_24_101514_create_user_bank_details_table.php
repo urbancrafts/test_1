@@ -15,11 +15,11 @@ class CreateUserBankDetailsTable extends Migration
     {
         Schema::create('user_bank_details', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('user_id')->nullable();
             $table->string('account_name')->nullable();
             $table->integer('account_number')->nullable();
             $table->string('account_type')->nullable();
             $table->string('bank_name')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

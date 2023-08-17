@@ -15,7 +15,7 @@ class CreateShoppingCartsTable extends Migration
     {
         Schema::create('shopping_carts', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('user_id')->nullable();
+            //$table->string('user_id')->nullable();
             $table->string('ip')->nullable();
             $table->integer('pid');
             $table->integer('qnty');
@@ -24,6 +24,7 @@ class CreateShoppingCartsTable extends Migration
             $table->integer('discount')->nullable();
             $table->longtext('details');
             $table->string('time_added');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

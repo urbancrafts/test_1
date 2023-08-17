@@ -15,13 +15,14 @@ class CreateUserVerificationsTable extends Migration
     {
         Schema::create('user_verifications', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('uid')->nullable();
+            // $table->integer('user_id')->nullable();
             $table->string('email_code')->nullable();
             $table->boolean('email_verified')->default('0');
             $table->datetime('email_token_time')->nullable();
             $table->string('sms_code')->nullable();
             $table->boolean('sms_verified')->default('0');
             $table->datetime('sms_token_time')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

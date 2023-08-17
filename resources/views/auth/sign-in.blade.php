@@ -26,7 +26,7 @@
                                             <div class="col-lg-8">
                                                 <input type="email" id="login-email" class="form-control wpcf7-form-control" placeholder="Email Address" name="login-email"   />
                                                 <span class="require-name"></span>
-                                                <input type="hidden" id="login-url-path" value="{{ url('') }}" />
+                                                
                                             </div>
                                         </div>
 
@@ -79,17 +79,17 @@
                                     </div>
                                 </form>
 
-                                <form id="recover-form" action="" method="POST" style="display: none">
-                                    <h4>Enter your email address to receive a new password</h4>
+                                <form id="recover-form" action="{{ action('App\Http\Controllers\API\RegisterController@forgot_password') }}" method="POST" style="display: none">
+                                    <h4>Enter your email address to receive an OTP code.</h4>
                                     <div class="form-group-inner">
                                         <div class="row">
                                             <div class="col-lg-4">
                                                 <label class="login2">Email:</label>
                                             </div>
                                             <div class="col-lg-8">
-                                                <input type="email" id="login-email" class="form-control wpcf7-form-control" placeholder="Email Address" name="login-email"   />
-                                                <span class="require-name"></span>
-                                                <input type="hidden" id="login-url-path" value="{{ url('') }}" />
+                                                <input type="email" id="email" class="form-control wpcf7-form-control" placeholder="Email Address" name="email"   />
+                                                <span class="require-email"></span>
+                                                
                                             </div>
                                         </div>
 
@@ -103,7 +103,7 @@
                                                 </div>
                                                 <div class="col-lg-8">
                                                     <div class="login-horizental">
-                                                        <button class=" button alt btn req-btn" type="submit">Recover</button>
+                                                        <button class=" button alt btn req-btn" type="submit">Submit</button>
                                                     </div>
                                                     
                                                 </div>
@@ -117,33 +117,32 @@
                 
                                     <h3>Signup Form</h3>
                                     <input type="hidden" id="site_url">
-                                    <div><span class="wpcf7-form-control-wrap your-name">
-                                    <select id="title" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required">
-                                    <option value="Mr." selected>Mr.</option>
-                                    <option value="Miss.">Miss.</option>
-                                    <option value="Mrs.">Mrs.</option>
-                                    <option value="Dr.">Dr.</option>
-                                    
-                                    </select>
-                                    </span></div> 
-                                <div><span class="wpcf7-form-control-wrap your-name"><input type="text" name="name" id="name"  size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required" aria-required="true" placeholder="Your name" /></span></div>
+                                 
+                                <div class="row">
+                                <div class="column-6"><span class="wpcf7-form-control-wrap your-first-name"><input type="text" name="first_name" id="first_name"  size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required" aria-required="true" placeholder="First name"  /></span></div>
+                                <div class="column-6"><span class="wpcf7-form-control-wrap your-last-name"><input type="text" name="last_name" id="last_name"  size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required" aria-required="true" placeholder="Last name" /></span></div>
+                                </div>
                                 <div class="row">
                                 <div class="column-6"><span class="wpcf7-form-control-wrap your-email"><input type="email" name="email" id="email" size="40" class="wpcf7-form-control wpcf7-text wpcf7-email wpcf7-validates-as-required wpcf7-validates-as-email" aria-required="true" placeholder="Email" /></span></div>
                                 <div class="column-6"><span class="wpcf7-form-control-wrap phone-number"><input type="tel" name="phone" id="phone" size="40" class="wpcf7-form-control wpcf7-text wpcf7-tel wpcf7-validates-as-required wpcf7-validates-as-tel" aria-required="true" placeholder="phone number" /></span></div>
                                 </div>
-                                <div><span class="wpcf7-form-control-wrap your-subject"><input type="password" name="password" id="pass"  size="40" class="wpcf7-form-control wpcf7-text" placeholder="Password" /></span></div>
-                                <div><span class="wpcf7-form-control-wrap your-subject"><input type="password" name="cpassword" id="cpass"  size="40" class="wpcf7-form-control wpcf7-text" placeholder="Confirm password" /></span></div>
-                                
+                                <div class="row">
+                                <div class="column-6"><span class="wpcf7-form-control-wrap your-password"><input type="password" name="password" id="pass"  size="40" class="wpcf7-form-control wpcf7-text" placeholder="Password" /></span></div>
+                                <div class="column-6"><span class="wpcf7-form-control-wrap your-cofirm-password"><input type="password" name="cpassword" id="cpass"  size="40" class="wpcf7-form-control wpcf7-text" placeholder="Confirm password" /></span></div>
+                                </div>
+
                                 <div>
                                     <fieldset>
 
                                         <legend class="account-type-header">User Account Type</legend>
 
-                                        
-                                        <label><input type="radio" name="user_type" id="user_type" value="resort_owner" checked/>Resort Owner</label>
-                                        <label><input type="radio" name="user_type" id="user_type" value="boat_owner" />Boat Owner</label>
-                                        <label><input type="radio" name="user_type" id="user_type" value="other_services" />Other Services</label>
-                                        <label><input type="radio" name="user_type" id="user_type" value="member" />Club Member</label>
+                                        <div><span class="wpcf7-form-control-wrap your-name">
+                                            <select id="account_type" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required">
+                                            <option value="Customer" selected>Customer Account</option>
+                                            <option value="Business">Business Account</option>
+                                            </select>
+                                            </span></div> 
+
                                       </fieldset>
                                     
                                     </div>
@@ -157,7 +156,7 @@
                                
                             </form>
                             
-                            <form id="otp-form" action="{{ action('App\Http\Controllers\API\RegisterController@confirm_otp') }}" method="post" class="wpcf7-form init"  style="display: none">
+                            <form id="otp-form" action="{{ action('App\Http\Controllers\API\RegisterController@verify_email_code') }}" method="post" class="wpcf7-form init"  style="display: none">
                             
 
 

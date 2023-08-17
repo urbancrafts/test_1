@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateVoucherCodesTable extends Migration
+class CreateAdminsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,10 @@ class CreateVoucherCodesTable extends Migration
      */
     public function up()
     {
-        Schema::create('voucher_codes', function (Blueprint $table) {
+        Schema::create('admins', function (Blueprint $table) {
             $table->id();
+            $table->enum('type', [1,2])->default(2);
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }
@@ -26,6 +28,6 @@ class CreateVoucherCodesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('voucher_codes');
+        Schema::dropIfExists('admins');
     }
 }

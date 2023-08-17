@@ -31,7 +31,7 @@ class CreateStoreItemsTable extends Migration
             $table->boolean('available')->default('1');
             $table->boolean('subscribed')->default('0');
             $table->string('sub_exp')->nullable();
-            $table->integer('created_by');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

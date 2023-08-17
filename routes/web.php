@@ -16,47 +16,73 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', 'App\Http\Controllers\PagesController@index');
 
-//Services landing pages view routes
-Route::get('services', 'App\Http\Controllers\PagesController@services');
-Route::get('services/service/{id}', 'App\Http\Controllers\PagesController@service');
 
-Route::get('login', 'App\Http\Controllers\PagesController@login');
-Route::get('register', 'App\Http\Controllers\PagesController@register');
+//Resort none auth grouped routes
+Route::group(['prefix' => '/resorts', 'as' => 'resorts.'], function () {
+Route::get('/', 'App\Http\Controllers\PagesController@resorts');
+Route::get('/resort/{id}', 'App\Http\Controllers\PagesController@resort');
+Route::get('/resort/{resort_id}/{id}', 'App\Http\Controllers\PagesController@rooms');
 
-Route::get('user_activation/{id}', 'App\Http\Controllers\UsersController@activate');
+});
 
+//Boat none auth grouped routes
+Route::group(['prefix' => '/boats', 'as' => 'boats.'], function () {
+Route::get('/', 'App\Http\Controllers\PagesController@boat_page');
+Route::get('/boat/{id}', 'App\Http\Controllers\PagesController@boat_single');
+});
+//Services none auth grouped routes
+Route::group(['prefix' => '/services', 'as' => 'services.'], function () {
+Route::get('/', 'App\Http\Controllers\PagesController@services');
+Route::get('/service/{id}', 'App\Http\Controllers\PagesController@service');
+});
+// Route::get('login', 'App\Http\Controllers\PagesController@login');
+// Route::get('register', 'App\Http\Controllers\PagesController@register');
 
-Route::get('register/signup_members', 'App\Http\Controllers\PagesController@signup_members');
-//Resort landing pages view routes
-Route::get('resorts', 'App\Http\Controllers\PagesController@resorts');
-Route::get('resorts/resort/{id}', 'App\Http\Controllers\PagesController@resort');
-Route::get('resorts/resort/{resort_id}/{id}', 'App\Http\Controllers\PagesController@rooms');
-
-//Pages group view routes
-Route::get('pages/blogs', 'App\Http\Controllers\PagesController@blog');
-Route::get('pages/blogs/{id}', 'App\Http\Controllers\PagesController@blog_detail');
-Route::get('pages/blogs/category/{category}', 'App\Http\Controllers\PagesController@blog_category');
-Route::get('pages/contact', 'App\Http\Controllers\PagesController@contact');
-Route::get('pages/about_us', 'App\Http\Controllers\PagesController@about_us');
+// Route::get('user_activation/{id}', 'App\Http\Controllers\UsersController@activate');
+//shop none auth grouped routes
+Route::group(['prefix' => '/shop', 'as' => 'shop.'], function () {
+Route::get('/', 'App\Http\Controllers\PagesController@shop');
+Route::get('/{category}/{id}', 'App\Http\Controllers\PagesController@shop_item');
+Route::get('/cart', 'App\Http\Controllers\PagesController@shop_cart');
+Route::get('/cart_checkout', 'App\Http\Controllers\PagesController@cart_checkout');
+});
+//Pages none auth grouped routes
+Route::group(['prefix' => '/pages', 'as' => 'pages.'], function () {
+Route::get('/blogs', 'App\Http\Controllers\PagesController@blog');
+Route::get('/blogs/{id}', 'App\Http\Controllers\PagesController@blog_detail');
+Route::get('/blogs/category/{category}', 'App\Http\Controllers\PagesController@blog_category');
+Route::get('/contact', 'App\Http\Controllers\PagesController@contact');
+Route::get('/about_us', 'App\Http\Controllers\PagesController@about_us');
+});
 //Shop landing pages view routes
-Route::get('shop', 'App\Http\Controllers\PagesController@shop');
-Route::get('shop/{category}/{id}', 'App\Http\Controllers\PagesController@shop_item');
-Route::get('shop/cart', 'App\Http\Controllers\PagesController@shop_cart');
-Route::get('shop/cart_checkout', 'App\Http\Controllers\PagesController@cart_checkout');
+
+
+
 //boats landing pages view routes
-Route::get('boats', 'App\Http\Controllers\PagesController@boat_page');
-Route::get('boats/boat/{id}', 'App\Http\Controllers\PagesController@boat_single');
+
 
 Route::get('payment/service_booking/{id}', 'App\Http\Controllers\PagesController@service_booking_payment');
 Route::get('payment/reservations/{id}', 'App\Http\Controllers\PagesController@reservation_payment');
 
 
 //loggedin routs
-Route::get('member_dashboard/{id}', 'App\Http\Controllers\PagesController@member');
-Route::get('admin_dashboard/{id}', 'App\Http\Controllers\PagesController@dashboard');
 
-Route::get('admin/events', 'App\Http\Controllers\PagesController@events');
-Route::get('admin/users', 'App\Http\Controllers\PagesController@users');
+Route::group(['prefix' => '/auth/customer', 'as' => 'customer.'], function () {
+    Route::get('/dashboard', 'App\Http\Controllers\CustomerController@index');
+
+    Route::get('users/profile/{id}', 'App\Http\Controllers\PagesController@user_profile');
+Route::get('admin/reservations', 'App\Http\Controllers\PagesController@reservations');
+Route::get('admin/service_bookings', 'App\Http\Controllers\PagesController@service_bookings');
+Route::get('admin/reservation/{id}', 'App\Http\Controllers\PagesController@reservation');
+Route::get('admin/print_reservation/{id}', 'App\Http\Controllers\PagesController@print_reservation');
+Route::get('admin/service_booking/{id}', 'App\Http\Controllers\PagesController@service_booking');
+Route::get('admin/print_booking/{id}', 'App\Http\Controllers\PagesController@print_booking');
+
+});
+
+Route::group(['prefix' => '/auth/business', 'as' => 'business.'], function () {
+    Route::get('/business_verification_form', 'App\Http\Controllers\BusinessController@business_verification_form');
+    Route::get('/dashboard', 'App\Http\Controllers\BusinessController@index');
 
 Route::get('users/profile/{id}', 'App\Http\Controllers\PagesController@user_profile');
 Route::get('admin/reservations', 'App\Http\Controllers\PagesController@reservations');
@@ -65,9 +91,7 @@ Route::get('admin/reservation/{id}', 'App\Http\Controllers\PagesController@reser
 Route::get('admin/print_reservation/{id}', 'App\Http\Controllers\PagesController@print_reservation');
 Route::get('admin/service_booking/{id}', 'App\Http\Controllers\PagesController@service_booking');
 Route::get('admin/print_booking/{id}', 'App\Http\Controllers\PagesController@print_booking');
-Route::get('admin/members', 'App\Http\Controllers\PagesController@members');
-Route::get('admin/site_visitors', 'App\Http\Controllers\PagesController@visitors');
-Route::get('admin/site_activities', 'App\Http\Controllers\PagesController@site_activities');
+
 
 //boat_manager view controller routes for boat administrators
 Route::get('admin/boat_manager/create_boat', 'App\Http\Controllers\PagesController@boat_services');
@@ -99,6 +123,32 @@ Route::get('admin/shop_manager/edit_delivery_settings/{id}', 'App\Http\Controlle
 Route::get('admin/shop_manager/product_order/{id}', 'App\Http\Controllers\PagesController@product_order');
 Route::get('admin/shop_manager/my_order_list', 'App\Http\Controllers\PagesController@my_order_list');
 Route::get('admin/shop_manager/admin_order_list', 'App\Http\Controllers\PagesController@admin_order_list');
+
+
+});
+
+Route::group(['prefix' => '/auth/admin', 'as' => 'admin.'], function () {
+    Route::get('/dashboard', 'App\Http\Controllers\AdminController@dashboard');
+
+    Route::get('users/profile/{id}', 'App\Http\Controllers\PagesController@user_profile');
+Route::get('admin/reservations', 'App\Http\Controllers\PagesController@reservations');
+Route::get('admin/service_bookings', 'App\Http\Controllers\PagesController@service_bookings');
+Route::get('admin/reservation/{id}', 'App\Http\Controllers\PagesController@reservation');
+Route::get('admin/print_reservation/{id}', 'App\Http\Controllers\PagesController@print_reservation');
+Route::get('admin/service_booking/{id}', 'App\Http\Controllers\PagesController@service_booking');
+Route::get('admin/print_booking/{id}', 'App\Http\Controllers\PagesController@print_booking');
+Route::get('admin/members', 'App\Http\Controllers\PagesController@members');
+Route::get('admin/site_visitors', 'App\Http\Controllers\PagesController@visitors');
+Route::get('admin/site_activities', 'App\Http\Controllers\PagesController@site_activities');
+});
+
+
+
+Route::get('admin/events', 'App\Http\Controllers\PagesController@events');
+Route::get('admin/users', 'App\Http\Controllers\PagesController@users');
+
+
+
 
 
 
@@ -144,10 +194,14 @@ Route::get('admin/book_service/{id}', 'App\Http\Controllers\PagesController@book
 
 
 
+Route::group(['prefix' => '/auth', 'as' => 'auth.'], function () {
 
-Route::post('admin/login', 'App\Http\Controllers\API\RegisterController@login');
-Route::post('login/login_user', 'App\Http\Controllers\Auth\LoginController@login');
-Route::post('register/confirm_otp', 'App\Http\Controllers\API\RegisterController@confirm_otp');
+Route::post('/user/login', 'App\Http\Controllers\API\RegisterController@login');
+Route::post('/user/forgot_password', 'App\Http\Controllers\API\RegisterController@forgot_password');
+Route::post('/user/verify_email_code', 'App\Http\Controllers\API\RegisterController@verify_email_code');
+
+});
+
 
 Route::post('admin/make_blog_post', 'App\Http\Controllers\AjaxRequestController@make_blog_post');
 

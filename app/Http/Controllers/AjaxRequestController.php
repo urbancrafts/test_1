@@ -75,6 +75,7 @@ class AjaxRequestController extends BaseController
         }
         return $this->sendResponse($data, 'Rooms data fetched.');
         }else{
+
             $data .= '<option value="">No data fetched</option>';
           return $this->showErrorMsg('This resort does not have any room data uploaded yet.', $data);
         }
@@ -758,10 +759,7 @@ public function update_settings(Request $request){
                     $settings->facebook = $request->input('fb');
                     $settings->instagram = $request->input('insta');
                     $settings->twitter = $request->input('email');
-                    $settings->number_of_resort = $request->input('no_of_resort');
-                    $settings->number_of_staff = $request->input('no_of_staff');
-                    $settings->number_of_bars = $request->input('no_of_bar');
-                    $settings->number_of_pool = $request->input('no_of_pool');
+                    
                     $settings->site_name = $request->input('site-name');
                     $settings->status = $request->input('status');
                     $settings->save();
@@ -1179,7 +1177,7 @@ public function load_shop_data(Request $request){
       
     
     
-    $selectShops = StoreItem::where('status', 1)->orderBy('id', 'desc')->limit($request->input('record_per_page'),$request->input('start'))->get();
+    $selectShops = StoreItem::orderBy('id', 'desc')->limit($request->input('record_per_page'),$request->input('start'))->get();
 
     if(count($selectShops) > 0){
         

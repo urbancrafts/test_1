@@ -14,13 +14,13 @@ class UserVerification extends Eloquent
 
     protected $fillable = [ 
         'id',
-        'uid',
         'email_code', 
         'email_verified',
         'email_token_time',
         'sms_code', 
         'sms_verified',
         'sms_token_time',
+        'user_id',
         'created_at',
         'updated_at',
     ];
@@ -28,38 +28,43 @@ class UserVerification extends Eloquent
     protected $table = 'user_verifications';
     protected $casts = [ 
         'id' => 'integer', 
-        'uid' => 'integer', 
-        'email_verified' => 'integer', 
-        'sms_verified' => 'integer', 
+        'user_id' => 'integer', 
+        //'email_verified' => 'integer', 
+        //'sms_verified' => 'integer', 
     ];
     protected $dates = [
         'created_at',
         'updated_at',
     ];
 
+
+    public function user(){
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
     public static function insertEmailCode($userID=null){
         return self::create([
-            'uid' => $userID,
             'email_code' => SettingsController::randomNums(3).SettingsController::randomNums(3),
-            'email_token_time' => DateTimeController::addDate('3 hours')
+            'email_token_time' => DateTimeController::addDate('3 hours'),
+            'user_id' => $userID
         ]); 
     }
 
 
     public static function forgotPasswordCode($userID=null){
         return self::create([
-            'uid' => $userID,
             'email_code' => $userID.'_'.SettingsController::randomNums(20),
-            'email_token_time' => DateTimeController::addDate('1 hours')
+            'email_token_time' => DateTimeController::addDate('1 hours'),
+            'user_id' => $userID
         ]); 
     }
 
 
     public static function insertSMSCode($userID=null){
         return self::create([
-            'uid' => $userID,
             'sms_code' => SettingsController::randomNums(8),
-            'sms_token_time' => DateTimeController::addDate('3 hours')
+            'sms_token_time' => DateTimeController::addDate('3 hours'),
+            'user_id' => $userID
         ]);
     }
 
@@ -68,14 +73,18 @@ class UserVerification extends Eloquent
     }
 
     public static function getSingleEmailCode($userID, $code){
-        return self::where('uid', $userID)->where('email_code', $code)->first();
+        return self::where('email_code', $code)->where('user_id', $userID)->first();
     }
 
 
     public static function updateToken($userID, $code){
-        return self::where('uid', $userID)->where('email_code', $code)->update([
+        return self::where('user_id', $userID)->where('email_code', $code)->update([
             'email_verified' => 1
         ]);
+    }
+
+    public static function delete_code($userID, $code){
+        return self::where('user_id', $userID)->where('email_code', $code)->delete();
     }
 
 

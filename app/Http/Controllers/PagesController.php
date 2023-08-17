@@ -46,16 +46,14 @@ use Illuminate\Support\Facades\Validator;
 class PagesController extends BaseController
 {
 
+    private $settings =  array();
+
     public function __construct(){
          //Buffering the output
-      $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
+      
+    $this->settings = Settings::where('status', true)->get();
 
-if(count($settings) > 0){
+if(count($this->settings) > 0){
    ob_start();  
    
    //Getting configuration details 
@@ -123,12 +121,7 @@ if(count($settings) > 0){
      */
     public function index()
     {   //run 4 queries from database tables
-        $s_id = 1;
-      $status = 1;
-      $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-       })->get();
+        
         
         $content = Content::all();
 
@@ -138,7 +131,7 @@ if(count($settings) > 0){
         $blog = Blog::orderBy('id', 'desc')->get();
 
         $room = Rooms::orderBy('id', 'desc')->get();
-    return view('pages.index', ['settings' => $settings, 'contents' => $content, 'services' => $services, 'resorts' => $resort, 'blogs' => $blog, 'rooms' => $room]);
+    return view('pages.index', ['settings' => $this->settings, 'contents' => $content, 'services' => $services, 'resorts' => $resort, 'blogs' => $blog, 'rooms' => $room]);
     }
 
     public function signup_members(){
@@ -420,7 +413,7 @@ public function shop(){
         
     
     $shopCategory = StoreCategory::all();
-    $shop = StoreItem::where('status', 1)->orderBy('id', 'desc')->get();
+    $shop = StoreItem::orderBy('id', 'desc')->get();
     return view('pages.shop', ['settings' => $settings, 
                                 'shops' => $shop, 
                                 'categories' => $shopCategory]);  

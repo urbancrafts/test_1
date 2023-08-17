@@ -15,11 +15,11 @@ class CreateRoomNumbersTable extends Migration
     {
         Schema::create('room_numbers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('resort_id')->nullable();
-            $table->integer('room_id')->nullable();
-            $table->string('name')->nullable();
+            $table->string('number')->nullable();
             $table->integer('capacity')->nullable();
             $table->string('status')->default('Ready');
+            // $table->integer('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('room_id')->nullable()->constrained('rooms')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

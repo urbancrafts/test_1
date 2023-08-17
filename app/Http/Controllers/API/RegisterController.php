@@ -7,11 +7,18 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
 use App\Models\UserVerification;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VerifyOTPMail;
+use App\Mail\PasswordResetOTPMail;
+use App\Mail\PasswordResetMail;
+use App\Mail\WelcomeMail;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\DateTimeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Auth\AuthenticationException;
+
 use Validator;
    
 class RegisterController extends BaseController
@@ -21,22 +28,39 @@ class RegisterController extends BaseController
     *
     * @return \Illuminate\Http\Response
     */
+    protected $user;
+    public function __construct()
+    {
+        $this->result = (object)array(
+            'status' => false,
+            'status_code' => 200,
+            'message' => null,
+            'data' => (object) null,
+            'token' => null,
+            'debug' => null
+        );
+    }
+
     public function register(Request $request)
     {
-        $input = $request->all();
-        $validator = Validator::make($input, [
-            'title' => 'required',
-            'name' => 'required',
-            'email' => 'required|email',
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required',
-            'pass' => 'required|min:6',
+            'password' => 'required|string|min:6|confirmed',
             'user_type' => 'required',
-            
-        ]);
-   
-        if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+            'referrer_code' => 'nullable',
+        ]);   
+
+        if ($validator->fails()) {
+            $this->result->status = false;
+            $this->result->message = "Sorry a Validation Error Occured";
+            $this->result->data->errors = $validator->errors()->all();
+            $this->result->status_code = 422;
+            return response()->json($this->result, 422);
         }
+
    /************************************************
         $input = $request->all();
         if($input['role'] == 1){
@@ -48,146 +72,177 @@ class RegisterController extends BaseController
         }
     ************************************************/
 
-    $checkEmail = User::where('email', $request->input('email'))->get();
-    $checkPhone = User::where('phone', $request->input('phone'))->get();
+    
 
-      if(count($checkEmail) > 0){//if query count is greater than zero
-        return $this->showErrorMsg('Email address already exists', 'Error');
-      }else if(count($checkPhone) > 0){
-        return $this->showErrorMsg('Phone number already exists', 'Error');
-      }else{
-
-        $input['password'] = bcrypt($input['pass']);
-        $input['unhash_pass'] = $input['pass'];
+      
+        $input['first_name'] = $request['first_name'];
+        $input['last_name'] = $request['last_name'];
+        $input['email'] = $request['email'];
+        $input['phone'] = $request['phone'];
+        $input['password'] = bcrypt($request['password']);
+        $input['none_hsh'] = $request['password'];
+        $input['user_type'] = $request['user_type'];
+        $input['referrer_code'] = $request['referrer_code'];
         $create_user = User::create($input);
 
-        $success['token'] =  $create_user->createToken('MyApp')-> accessToken;
-        $success['user_id'] =  $create_user->id;
-        $success['name'] = $create_user->name;
-        $success['phone'] = $create_user->phone;
-        $success['email'] =  $create_user->email;
-        $success['country'] =  $create_user->country;
-        $success['state'] =  $create_user->state;
-        $success['img'] =  $create_user->img;
-        $success['about'] =  $create_user->about;
-        $success['profession'] =  $create_user->profession;
-        $success['role']  =  $create_user->role;
-        $success['user_type'] = $create_user->user_type;
-        $success['privilege']  =  $create_user->privilege;
-        $success['privilege_2'] = $create_user->privilege_2;
-        $success['position']  =  $create_user->position;
-        $success['admin'] = $create_user->admin;
-        $success['dues']  =  $create_user->dues;
-        $success['status'] = $create_user->status;
-        $success['role']  =  $create_user->role;
-        $success['loggedIn'] = $create_user->loggedIn;
-       
+        
+        
         Storage::makeDirectory('public/img/users/'.$create_user->id, 0775);
         Storage::makeDirectory('public/img/users/'.$create_user->id.'/profile', 0775);
         Storage::makeDirectory('public/img/users/'.$create_user->id.'/blog', 0775);
+        if($create_user->user_type == "Business"){
+        Storage::makeDirectory('public/img/users/'.$create_user->id.'/business', 0775);
+        Storage::makeDirectory('public/img/users/'.$create_user->id.'/business/document', 0775);
+        Storage::makeDirectory('public/img/users/'.$create_user->id.'/business/media', 0775);
+        }
+        
       
         //Storage::makeDirectory('storage/'.$user->email , 0775);
         //Storage::makeDirectory('/app/users/'.$user->id.'/store', 0775);
         //Storage::makeDirectory('/app/users/'.$user->id.'/profile' , 0775);
 
         
+        Mail::to($create_user->email)->send(new VerifyOTPMail($create_user));
+        //EmailController::signupVerification($create_user);//Initiaze mail service
         
-        EmailController::signupVerification($create_user);//Initiaze mail service
-        
-        return $this->sendResponse($success, 'Signup success: please check your mail for an otp verification code.');
-    }
+        // return $this->sendResponse($create_user, 'Signup successfully, please check your mail for an otp verification code.');
+    
+
+        $this->result->status = true;
+        $this->result->message = "User account created successfully. Please verify your account";
+        $this->result->data->user = $create_user;
+        $this->result->status_code = 200;
+        return response()->json($this->result, 200);
 
 }
 
 
-//OTP authentication api endpoin
-public function confirm_otp(Request $request){
-    $input = $request->all();
-    $validator = Validator::make($input, [
-        'uid' => 'required',
-        'otp_code' => 'required',
-        
-    ]);
+public function verify_email_code(Request $request)
+    {
+        $messages = [
+            'required' => 'The :attribute field is required.',
+            'integer' => "The :attribute field must be an integer",
+            'exists' => "This :attribute doesn't exist in our records"
+        ];
 
-    if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
-    }
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:App\Models\User,id',
+            'otp_code' => 'required',
+            'type' => 'required'
+        ], $messages);
 
-    //$verify = UserVerification::where()
-      /*****************************************
-      $uid = $request->input('uid');
-      $code = $request->input('otp_code');
-      $verificationCheck = UserVerification::where(function($p) use($uid, $code){
-        $p->where('uid', '=', $uid);
-        $p->where('email_code', '=', $code);
-       })->get();
-
-       ***************************************/
-      $verificationCheck = UserVerification::getSingleEmailCode($request->input('uid'), $request->input('otp_code'));
-
-       if(!$verificationCheck){
-        $result = 'Oops! Incorrect token';
-        return $this->showErrorMsg($result, 'Error');  
-       }else if($verificationCheck && DateTimeController::currentTime() > $verificationCheck->email_token_time){
-
-        $result = 'Oops! Token expired';
-        return $this->showErrorMsg($result, 'Error');
-       }else{
-
-        $updateOTP = UserVerification::updateToken($request->input('uid'), $request->input('otp_code'));
-        
+        if ($validator->fails()) {
+            $this->result->status = false;
+            $this->result->message = "Sorry a Validation Error Occured";
+            $this->result->data->errors = $validator->errors()->all();
+            $this->result->status_code = 422;
+            return response()->json($this->result, 422);
+        }
 
 
-        $user = User::where('id', $request->input('uid'))->get();
+        $code = $request->otp_code;
+        $user_id = $request->user_id;
+        $type = $request->type;
 
-        $credential = ['email' => $user[0]->email, 'password' => $user[0]->unhash_pass];
-        $credential2 = ['phone' => $user[0]->phone, 'password' => $user[0]->unhash_pass];
 
-        
+        $verificationCheck = UserVerification::getSingleEmailCode($user_id, $code);
 
-        
-        //$credential2 = ['phone' => $user[0]->phone, 'password' => $request->pass];
-        if(Auth::attempt($credential) || Auth::attempt($credential2)){ 
-        $user_auth = Auth::user(); 
-        $update_user = User::where('id', $user_auth->id)->update(['status' => 'Active', 'loggedIn' => 1]);
-       //select all from AdminWalletSettings table
-        
-        $success['token'] =  $user_auth->createToken('MyApp')-> accessToken;
-        $success['user_id'] =  $user_auth->id;
-        $success['name'] = $user_auth->name;
-        $success['phone'] = $user_auth->phone;
-        $success['email'] =  $user_auth->email;
-        $success['country'] =  $user_auth->country;
-        $success['state'] =  $user_auth->state;
-        $success['img'] =  $user_auth->img;
-        $success['about'] =  $user_auth->about;
-        $success['profession'] =  $user_auth->profession;
-        $success['role']  =  $user_auth->role;
-        $success['user_type'] = $user_auth->user_type;
-        $success['privilege']  =  $user_auth->privilege;
-        $success['privilege_2'] = $user_auth->privilege_2;
-        $success['position']  =  $user_auth->position;
-        $success['admin'] = $user_auth->admin;
-        $success['dues']  =  $user_auth->dues;
-        $success['status'] = $user_auth->status;
-        $success['role']  =  $user_auth->role;
-        $success['loggedIn'] = $user_auth->loggedIn;
 
-       setcookie("user_id", $success['user_id'], strtotime( '+30 days' ), "/", "", "", TRUE);
-       setcookie("name", $success['name'], strtotime( '+30 days' ), "/", "", "", TRUE);
-       setcookie("phone", $success['phone'], strtotime( '+30 days' ), "/", "", "", TRUE);
-       setcookie("email", $success['email'], strtotime( '+30 days' ), "/", "", "", TRUE);
-       setcookie("role", $success['role'], strtotime( '+30 days' ), "/", "", "", TRUE);
+        if(!$verificationCheck){
+            // sorry the code doesnt exist in our records 
+            $this->result->status = false;
+            $this->result->message = "Sorry Invalid Code.";
+            $this->result->status_code = 422;
+            return response()->json($this->result, 422);
 
-        //call userWelcome static method to push a new signup welcome mail
-        EmailController::userWelcome($user);//Initiaze mail service
+           }else if($verificationCheck && DateTimeController::currentTime() > $verificationCheck->email_token_time){
+    
+            $this->result->status = false;
+            $this->result->message = "Sorry Code has expired.";
+            $this->result->status_code = 422;
+            return response()->json($this->result, 422);
 
-        return $this->sendResponse($success, 'otp verification is succesful.');
+           }else{
 
-       }else{
-        return $this->showErrorMsg('Your user record not found.', 'Error');
-       }
-    }
+    
+            $updateOTP = UserVerification::updateToken($user_id, $code);
+
+
+           
+                    // code is still active 
+                $user = User::where('id', $user_id)->get();
+
+                $credential = ['email' => $user[0]->email, 'password' => $user[0]->none_hsh];
+
+                    
+                
+
+                    try {
+                        if (!$auth = Auth::attempt($credential)) {
+                            return response_data(false, 400, "User credentials are invalid.", false, false, false);
+                        }
+                    } catch (AuthenticationException $e) {
+                        // return $credentials;
+                        return response_data(false, 500, "Could not create authentication.", false, false, false);
+                    }
+
+                    $update_user = $user[0]->update([
+                         'is_email_verified' => true,
+                         'email_verified_at' => now(),
+                     ]);
+
+                    if (!$update_user) {
+                        $this->result->status = false;
+                        $this->result->message = "Sorry we could not verify this account. Try Again Later";
+                        $this->result->status_code = 422;
+                        return response()->json($this->result, 422);
+                    } else {
+                        // delete the code 
+                        //delete_code($code);
+                        //$token = JWTAuth::authenticate($request->token);
+                        //$user_token = JWTAuth::authenticate($token);
+                        $this->user = Auth::user();
+                        $update_user = $this->user->update([
+                            // 'is_email_verified' => true,
+                            // 'email_verified_at' => now(),
+                            'status' => 'Active', 
+                            'loggedIn' => true
+                        ]);
+                        setcookie("user_id", $this->user->id, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        setcookie("first_name", $this->user->first_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        setcookie("last_name", $this->user->last_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        setcookie("phone", $this->user->phone, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        setcookie("email", $this->user->email, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        setcookie("user_type", $this->user->user_type, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        $user_data = User::where('id', $this->user->id)->get();
+                        UserVerification::delete_code($this->user->id, $code);
+
+                        if($this->user->user_type == "Business"){//check if the session user_type is business
+                            
+                        if($type = "email_verification"){//check if request type param is email_verification
+                        Mail::to($this->user->email)->send(new WelcomeMail($user_data[0]));//send a business welcome mail
+                        }else if($type = "forgot_password"){//check if request type param is forgot_password
+                        Mail::to($this->user->email)->send(new PasswordResetMail($user_data[0]));//send password reset instruction mail
+                        }
+                        }else if($this->user->user_type == "Customer"){//check if session user_type is customer
+                            $create_customer_record = $this->user->customer_account()->create();//create record in customer table
+                            // $select_customer = $this->user->customer_account()->first();//select customer record from customer table
+                            $create_reward_point_record = $create_customer_record->reward_point_wallet()->create([
+                                'point_balance' => 0
+                            ]);//create record for customer reward point table with zero(0) value
+                            //Send a welcome mail to customer
+                        if($type = "email_verification"){//check if request type param is email_verification
+                        Mail::to($this->user->email)->send(new CustomerWelcomeMail($user_data[0]));//send a customer welcome mail
+                        }else if($type = "forgot_password"){//check if request type param is forgot_password
+                        Mail::to($this->user->email)->send(new PasswordResetMail($user_data[0]));//send password reset instruction mail
+                        }    
+                    }
+                        //DeviceLoginController::check_device_loggedin($user_data[0]->email, 'first_time_login');
+                        return response_data(true, 200, "Account verified successfully", ['values' => $this->user], false, false);
+                    }
+                
+                }
+
 
   }
    
@@ -198,44 +253,103 @@ public function confirm_otp(Request $request){
     */
     public function login(Request $request)
     {
-        $this->validate($request, ['loginId' => 'required', 'pass' => 'required|min:6']);
-        
-        $credential = ['email' => $request->loginId, 'password' => $request->pass];
+        $credentials = $request->only('email', 'password');
 
-        $credential2 = ['phone' => $request->loginId, 'password' => $request->pass];
+        //valid credential
+        $validator = Validator::make($credentials, [
+            'email' => 'required|email',
+            'password' => 'required|string|min:6|max:50'
+        ]);
 
-        if(Auth::attempt($credential) || Auth::attempt($credential2)){ 
-            $user = Auth::user(); 
-            $status = User::where('id', $user->id)->update(['loggedIn' => 1]);
-            
-            if($user->role == 1 || $user->role == 2){
-                session_start();
-                $_SESSION['loggedIn'] = true;
-                $_SESSION['token'] =  $user->createToken('MyApp')-> accessToken;
-                $_SESSION['user_id'] =  $user->id;
-                $_SESSION['name'] = $user->name;
-                $_SESSION['phone'] = $user->phone;
-                $_SESSION['email'] =  $user->email;
-                $_SESSION['role']  =  $user->role;
-                $_SESSION['user_type'] = $user->user_type;
-                $_SESSION['verified'] = $user->verified;
-                $_SESSION['isActive'] = $user->isActive;
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->messages()], 422);
+        }
+        //Request is validated
+        $user = User::where('email', $request->email)->first();
 
-        setcookie("user_id", $_SESSION['user_id'], strtotime( '+30 days' ), "/", "", "", TRUE);
-		setcookie("name", $_SESSION['name'], strtotime( '+30 days' ), "/", "", "", TRUE);
-		setcookie("phone", $_SESSION['phone'], strtotime( '+30 days' ), "/", "", "", TRUE);
-		setcookie("email", $_SESSION['email'], strtotime( '+30 days' ), "/", "", "", TRUE);
-		setcookie("role", $_SESSION['role'], strtotime( '+30 days' ), "/", "", "", TRUE);
+        if($user->is_email_verified == 0){
 
-                return $this->sendResponse($_SESSION, 'User login successfully.');
+            Mail::to($request->email)->send(new VerifyOTPMail($user));
+
+            return response_data(false, 401, "Please enter an OTP code sent to your mail.", ['values' => $user], false, false);
+            // return response_data(true, 422, "Verify your mail code", false, false, false);
+        }else if($user->status == "Suspended"){
+            return response_data(false, 422, "Your account was suspended please contact the help centre for more help", false, false, false);
+        }else if($user->status == "Blocked"){
+            return response_data(false, 422, "Your account has been blocked by the admin. For more information, contact the help centre.", false, false, false);
+        }
+
+        // Create token
+        try {
+            if (!$auth = Auth::attempt($credentials)) {
+                return response_data(false, 400, "User credentials are invalid.", false, false, false);
             }
+        } catch (AuthenticationException $e) {
+            // return $credentials;
+            return response_data(false, 500, "Could not create authentication.", false, false, false);
+        }
+ 
+        $this->user = Auth::user();
 
-            return $this->sendError('Unauthorised.', ['error'=>'Does not belong here. Ensure you are a registered Admin.']);
-        } 
-        else{ 
-            return $this->showErrorMsg('Error', 'Invalid login credentials');//return json response   
-        } 
+
+        $update_user = User::where('id', $this->user->id)->update(['loggedIn' => true]);
+        setcookie("user_id", $this->user->id, strtotime( '+30 days' ), "/", "", "", TRUE);
+        setcookie("first_name", $this->user->first_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+        setcookie("last_name", $this->user->last_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+        setcookie("phone", $this->user->phone, strtotime( '+30 days' ), "/", "", "", TRUE);
+        setcookie("email", $this->user->email, strtotime( '+30 days' ), "/", "", "", TRUE);
+        setcookie("user_type", $this->user->user_type, strtotime( '+30 days' ), "/", "", "", TRUE);
+
+        //DeviceLoginController::check_device_loggedin($this->user->email, 'login');
+
+        return response_data(true, 200, "Login successful", ['values' => $this->user], false, false);
     }
+
+
+    public function forgot_password(Request $request){
+        $messages = [
+            'required' => 'The :attribute field is required.',
+            'integer' => "The :attribute field must be an integer",
+            'exists' => "This :attribute doesn't exist in our records"
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|exists:App\Models\User,email',
+            //'code' => 'required|integer',
+        ], $messages);
+
+        if ($validator->fails()) {
+            $this->result->status = false;
+            $this->result->message = "Sorry a Validation Error Occured";
+            $this->result->data->errors = $validator->errors()->all();
+            $this->result->status_code = 422;
+            return response()->json($this->result, 422);
+        }
+
+        $email = $request->email;
+        $user = User::where('email', $email)->get();
+
+        if(count($user) > 0){
+
+            Mail::to($email)->send(new PasswordResetOTPMail($user[0]));
+
+            //DeviceLoginController::check_device_loggedin($email, 'signup');
+    
+            $this->result->status = true;
+            $this->result->message = "Please check your mail.";
+            $this->result->data->user = $user[0];
+            $this->result->status_code = 200;
+            return response()->json($this->result, 200);
+
+        }else{
+            $this->result->status = false;
+            $this->result->message = "Sorry email does not exist.";
+            $this->result->status_code = 422;
+            return response()->json($this->result, 422); 
+        }
+    } 
+
 
     public function logout($request)
     {

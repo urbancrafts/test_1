@@ -15,19 +15,18 @@ class CreateRoomsTable extends Migration
     {
         Schema::create('rooms', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('shelter_id');
-            $table->string('room_no');
+            $table->string('room_name');
+            $table->enum('type', ['Room', 'Suite'])->default('Room');
             $table->text('descr')->nullable();
-            $table->integer('qnty')->nullable();
+            $table->integer('available_number')->nullable();
             $table->integer('capacity')->nullable();
-            $table->string('amount');
             $table->string('curr');
-            $table->string('duration')->default('24 hours');
-            $table->boolean('available')->default('1');
+            $table->string('price');
             $table->text('img_1')->nullable();
             $table->longtext('images')->nullable();
-            $table->text('location')->nullable();
-            $table->integer('created_by')->nullable();
+            $table->string('duration')->default('24 hours');
+            $table->boolean('available')->default(true);
+            $table->foreignId('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }
