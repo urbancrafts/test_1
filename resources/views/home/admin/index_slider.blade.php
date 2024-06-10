@@ -256,6 +256,10 @@ a.book-btn, a.del-btn, a.edit-btn{
   
   </style>
   
+  <link rel="stylesheet" href="{{ asset('plugins_2/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css')}}">
+    <!-- Toastr -->
+  <link rel="stylesheet" href="{{ asset('plugins_2/toastr/toastr.min.css')}}">  
+
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPxcQlAZ_LWl4EZtHU27zTv3CFpCaSQ_A&libraries=places&callback=initAutocomplete" async defer></script>
   <script type="text/javascript">
     function initAutocomplete() {
@@ -279,6 +283,13 @@ a.book-btn, a.del-btn, a.edit-btn{
   
   <script type="text/javascript">
   $(document).ready(function(){
+
+    var Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 9000
+  });
   
     $('#category').on('change', function(e){
      
@@ -289,38 +300,113 @@ a.book-btn, a.del-btn, a.edit-btn{
        },
          type: "POST",
          dataType: "json",
-         url: "{{ action('App\Http\Controllers\AjaxRequestController@load_slider_category') }}",
+         url: "{{ action('App\Http\Controllers\AdminController@load_slider_category') }}",
          data: {'category': $(this).val()},
          beforeSend:function(){
-             $(".blog-alert-success").show();
-             $('.blog-alert-danger').hide();
-             $(".blog-alert-success").html("<div class='load'>Loading...</div>");
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+          });
          },
          complete:function(){
-             $(".alert").hide();
+             //$(".alert").hide();
          },
-         error:function(){
-         $(".blog-alert-success").hide();
-         $(".blog-alert-danger").show();
-         $(".blog-alert-danger").html("Please check your internet connection");
-         },
+        
          success:function(data){
-            if(data.success == true){
+            if(data.status == true){
               $("#sendEmail").prop('disabled', true);
-              $(".blog-alert-success").show();
-              $("#show-result").html(data.data);
+              Toast.fire({
+              icon: 'success',
+              title: data.message
+              });
               
-            }else if(data.success == false){
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data.message);
+              $("#show-result").html(data.data.values);
+              
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
             }else{
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data);
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
             }
               
-         }
+         },
+
+         error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}    
+
          });
 
     });
@@ -331,10 +417,26 @@ a.book-btn, a.del-btn, a.edit-btn{
   });
 
   function addServiceSlide(elem){
+    var Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 9000
+  });
     var id = $(elem).attr('data-id');
     var cat = $(elem).attr('data-cat');
+    var name = $(elem).attr('data-name');
+
+  if(cat == "Shop"){
+    var str = confirm('Do You Want To Add '+name+' Product To The Slide?');
+  }else if(cat == "Resort"){
+    var str = confirm('Do You Want To Add '+name+' Resort To The Slide?');
+  }else if(cat == "Boat"){
+    var str = confirm('Do You Want To Add '+name+' Boat To The Slide?');
+  }else if(cat == "Others"){
+    var str = confirm('Do You Want To Add '+name+' Service To The Slide?');
+  }
     
-  var str = confirm('Do you want to add this '+cat+' to slide?');
   if(str == true){
     $.ajax({
           headers: {
@@ -342,37 +444,111 @@ a.book-btn, a.del-btn, a.edit-btn{
        },
          type: "POST",
          dataType: "json",
-         url: "{{ action('App\Http\Controllers\AjaxRequestController@add_to_slide') }}",
+         url: "{{ action('App\Http\Controllers\AdminController@add_to_slide') }}",
          data: {'category': cat, 'id': id},
          beforeSend:function(){
-             $(".blog-alert-success").show();
-             $('.blog-alert-danger').hide();
-             $(".blog-alert-success").html("<div class='load'>Loading...</div>");
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+          });
          },
          complete:function(){
-             $(".blog-alert-success").hide();
+             //$(".blog-alert-success").hide();
          },
-         error:function(){
-         $(".blog-alert-success").hide();
-         $(".blog-alert-danger").show();
-         $(".blog-alert-danger").html("Please check your internet connection");
-         },
+        
          success:function(data){
-            if(data.success == true){
-              $(".blog-alert-success").show();
-              $(".blog-alert-success").html(data.message);
+            if(data.status == true){
+              Toast.fire({
+              icon: 'success',
+              title: data.message
+              });
+              
               location.reload();
-            }else if(data.success == false){
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data.message);
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
             }else{
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data);
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
             }
               
-         }
+         },
+
+         error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}    
+
          });
 
   }
@@ -380,6 +556,171 @@ a.book-btn, a.del-btn, a.edit-btn{
   }
   
   
+  function selectServiceToUpdate(id){
+    var site_url = "{{ url('') }}";//full site domain url
+
+    var Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 9000
+  });
+
+  var str = confirm("Do you want to update this service? Click Ok to proceed or click Cancel.");
+  if(str == true){
+    $.ajax({
+          headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+       },
+         type: "POST",
+         dataType: "json",
+         url: "{{ action('App\Http\Controllers\AdminController@update_index_slide') }}",
+         data: {"uid":id},
+         beforeSend:function(){  
+         },
+         complete:function(){  
+         },
+         error:function(){
+         },
+         success:function(data){
+            if(data.success == true){
+              location.reload();
+            }else if(data.success == false){
+              alert(data.message);
+            }else{
+              alert(data);
+            }
+              
+         }
+         }); 
+  } 
+}
+
+  function deleteServiceSlide(id,name){
+  var site_url = "{{ url('') }}";//full site domain url
+
+var Toast = Swal.mixin({
+toast: true,
+position: 'top-end',
+showConfirmButton: false,
+timer: 9000
+});
+  var str = confirm('Do you really want to delete '+name+'?');
+  if(str == true){
+    $.ajax({
+          headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+       },
+         type: "DELETE",
+         dataType: "json",
+         url: site_url+"/auth/admin/content_managment/delete_service_slide/"+id,
+         
+         beforeSend:function(){  
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+           });
+         },
+         complete:function(){  
+         },
+         
+         success:function(data){
+            if(data.status == true){
+              Toast.fire({
+              icon: 'success',
+              title: data.message
+              });
+              location.reload();
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
+            
+            }else{
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
+            }
+              
+         },
+
+         error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}    
+
+         }); 
+  }
+}
+
   </script>
   
   
@@ -391,7 +732,7 @@ a.book-btn, a.del-btn, a.edit-btn{
      
   @include('inc.header2')
 
-  @include('inc.dashboard-side-bar2')
+  @include('inc.admin-sidebar')
 
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -399,7 +740,7 @@ a.book-btn, a.del-btn, a.edit-btn{
     <section class="content-header">
       <h1>
         Admin
-        <small>Index Slideshow</small>
+        <small>Landing page slideshow</small>
       </h1>
       
     </section>
@@ -417,7 +758,7 @@ a.book-btn, a.del-btn, a.edit-btn{
                 <div class="card-header">
                   
     
-                  <h3 class="card-title"><i class="fa fa-laptop"></i> Create Index service slider</h3>
+                  <h3 class="card-title"><i class="fa fa-laptop"></i> Add items to landing page slidshow</h3>
                   <!-- tools box -->
                   <div class="float-right card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse">
@@ -432,7 +773,7 @@ a.book-btn, a.del-btn, a.edit-btn{
                 <div class="card-body">
                   <form id="service-form" action="" method="post" enctype="multipart/form-data">
                    
-                   <input type='hidden' id='curr' name='curr' value='{{$settings[0]->curr}}' />
+                   <input type='hidden' id='curr' name='curr' value='{{$settings->curr}}' />
                    <div class="form-group">
                     <span style="color: red; display: none" class="resort-category-error">(*Required)</span>
                   <select id="category" name="category" class="form-control">
@@ -440,7 +781,7 @@ a.book-btn, a.del-btn, a.edit-btn{
                       <option value="Boat">Boat</option>
                       <option value="Shop">Shop</option>
                       <option value="Resort">Resort</option>
-                      <option value="Others">Others</option>
+                      <option value="Others">Other Services</option>
                   </select>
                 </div> 
                    
@@ -600,6 +941,13 @@ $.widget.bridge('uibutton', $.ui.button)
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.html5.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.print.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.colVis.min.js')}}"></script>
+
+
+<!-- SweetAlert2 -->
+<script src="{{ asset('plugins_2/sweetalert2/sweetalert2.min.js')}}"></script>
+<!-- Toastr -->
+<script src="{{ asset('plugins_2/toastr/toastr.min.js')}}"></script>
+
 
 <!-- AdminLTE App -->
 <script src="{{asset('dist_2/js/adminlte.min.js')}}"></script>

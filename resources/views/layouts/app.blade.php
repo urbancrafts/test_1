@@ -403,102 +403,8 @@ if($.trim($('#name').val()) == ""){
 
 });
 
-$('form#settings-form').on('submit', function(e){
-e.preventDefault();
-var action = $(this).attr('action');
-//var uid = jQuery("#uid").val();
-//var name = jQuery("#name").val();
-//var title = jQuery("#title").val();
-//var content = jQuery("#blog-content").val();
 
-var formdata = new FormData(this);//create an instance for the form input fields
-if($.trim($('#curr').val()) == ""){
-  $('#curr').css('border', 'solid 1px red');
-  $('.resort-curr-error').show();
 
-}else if($.trim($('#tel').val()) == ""){
-  $('#tel').css('border', 'solid 1px red');
-  $('.resort-tel-error').show();
-
-}else if(!Number($('#tel').val())){
-  $('#tel').css('border', 'solid 1px red');
-  $('.resort-tel-error').show();
-  $('.resort-tel-error').html('(mobile field requires numeric data only)');
-}else if($.trim($('#mobile').val()) == ""){
-  $('#mobile').css('border', 'solid 1px red');
-  $('.resort-mobile-error').show();
-  $('.resort-mobile-error').html('(*Required)');
-
-}else if(!Number($('#mobile').val())){
-  $('#mobile').css('border', 'solid 1px red');
-  $('.resort-mobile-error').show();
-  $('.resort-mobile-error').html('(mobile field requires numeric data only)');
-}else if($.trim($('#email').val()) == "" ){
-  $('#email').css('border', 'solid 1px red');
-  $('.resort-email-error').show();
-  $('.resort-email-error').html('(*Required)');
-
-}else if($.trim($('#address').val()) == ""){
-  $('#address').css('border', 'solid 1px red');
-  $('.resort-address-error').show();
-  $('.resort-address-error').html('(*Required)');
-
-}else if($.trim($("#discount").val()) !="" && !Number($("#discount").val())){
-  $('#discount').css('border', 'solid 1px red');
-  $('.resort-discount-error').show();
-  $('.resort-discount-error').html('(discount field requires numeric data only)');
-}else if($.trim($('#site-name').val()) == ""){
-  $('#site-name').css('border', 'solid 1px red');
-  $('.resort-sname-error').show();
-  $('.resort-sname-error').html('(*Required)');
-
-}else{
-     $.ajax({
-          headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-       },
-         type: "POST",
-         dataType: "json",
-         url: action,
-         data: formdata,
-         cache: false,
-         contentType: false,
-         processData: false,
-         beforeSend:function(){
-             $(".blog-alert-success").show();
-             $('.blog-alert-danger').hide();
-             $(".blog-alert-success").html("<div class='load'>Loading...</div>");
-         },
-         complete:function(){
-             $(".load").hide();
-         },
-         error:function(){
-         $(".blog-alert-success").hide();
-         $(".blog-alert-danger").show();
-         $(".blog-alert-danger").html("Please check your internet connection");
-         },
-         success:function(data){
-            if(data.success == true){
-              $("#sendEmail").prop('disabled', true);
-              $(".blog-alert-danger").hide();
-              $(".blog-alert-success").css('display', 'block !important');
-              $(".blog-alert-success").html(data.message);
-            }else if(data.success == false){
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data.message);
-            }else{
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data);
-            }
-              
-         }
-         });
-
-}
-
-});
 
 
 
@@ -996,36 +902,7 @@ function deleteUser(id,name){
 
 
 
-function deleteServiceSlide(id,name){
-  var str = confirm('Do you really want to delete '+name+'?');
-  if(str == true){
-    $.ajax({
-          headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-       },
-         type: "POST",
-         dataType: "json",
-         url: "{{ action('App\Http\Controllers\AjaxRequestController@delete_service_slide') }}",
-         data: {"uid":id},
-         beforeSend:function(){  
-         },
-         complete:function(){  
-         },
-         error:function(){
-         },
-         success:function(data){
-            if(data.success == true){
-              location.reload();
-            }else if(data.success == false){
-              alert(data.message);
-            }else{
-              alert(data);
-            }
-              
-         }
-         }); 
-  }
-}
+
 
 
 
@@ -1158,36 +1035,7 @@ function updateBookingState(id){
   } 
 }
 
-function selectServiceToUpdate(id){
-  var str = confirm("Do you want to update this service? Click Ok to proceed or click Cancel.");
-  if(str == true){
-    $.ajax({
-          headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-       },
-         type: "POST",
-         dataType: "json",
-         url: "{{ action('App\Http\Controllers\AjaxRequestController@update_index_slide') }}",
-         data: {"uid":id},
-         beforeSend:function(){  
-         },
-         complete:function(){  
-         },
-         error:function(){
-         },
-         success:function(data){
-            if(data.success == true){
-              location.reload();
-            }else if(data.success == false){
-              alert(data.message);
-            }else{
-              alert(data);
-            }
-              
-         }
-         }); 
-  } 
-}
+
 
 function noteCounter(){
   $.ajax({
@@ -1311,10 +1159,15 @@ function supportNoteCounter(){
          }); 
 }
 
-function elementFocus(id, element){
-  $('#'+id).css('border', 'none');
-  $('.'+element).css('display', 'none');
+function elementFocus(id){
+  $('#'+id).css('border', 'solid 1px gray');
+  // $('.'+element).css('display', 'none');
 }
+
+// function elementFocus(id, element){
+//   $('#'+id).css('border', 'none');
+//   $('.'+element).css('display', 'none');
+// }
 </script>
 
   @yield('content')

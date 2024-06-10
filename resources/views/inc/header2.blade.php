@@ -1,5 +1,8 @@
 <div class="preloader flex-column justify-content-center align-items-center">
-  <img class="animation__shake" src="{{ asset('storage/img/site_logo/'.$settings[0]->logo) }}" alt="{{$settings[0]->site_name}} Logo" height="60" width="60">
+  @if ($settings->logo != null)
+  <img class="animation__shake" src="{{ $settings->icon }}" alt="{{$settings->site_name}} Logo" height="60" width="60">
+  @endif
+  
 </div>
 
 <!-- Navbar -->
@@ -62,26 +65,26 @@
      <!-- User Account: style can be found in dropdown.less -->
      <li class="nav-item dropdown user user-menu">
       <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
-        @if(Auth::user()->img == null)
-        <img src="{{asset('storage/img/users/default.png')}}" class="user-image" alt="{{Auth::user()->name}}">   
+        @if(Auth::user() && $myselfs->profile_img_url == null)
+        <img src="{{asset('storage/img/users/default.png')}}" class="user-image" alt="{{$myselfs->first_name}}">   
         @else
-        <img src="{{asset('storage/img/users/'.Auth::user()->id.'/profile/'.Auth::user()->img)}}" class="user-image" alt="{{Auth::user()->name}}">  
+        <img src="{{$myselfs->profile_img_url}}" class="user-image" alt="{{$myselfs->first_name}}">  
         @endif
         
-        <span class="hidden-xs">{{Auth::user()->name}}</span>
+        <span class="hidden-xs">{{$myselfs->first_name}}</span>
       </a>
       <ul class="dropdown-menu">
         <!-- User image -->
         <li class="user-header">
-          @if(Auth::user()->img == null)
-        <img src="{{asset('storage/img/users/default.png')}}" class="img-circle" alt="{{Auth::user()->name}}">   
+          @if($myselfs->profile_img_url == null)
+        <img src="{{asset('storage/img/users/default.png')}}" class="img-circle" alt="{{$myselfs->first_name}}">   
         @else
-        <img src="{{asset('storage/img/users/'.Auth::user()->id.'/profile/'.Auth::user()->img)}}" class="img-circle" alt="{{Auth::user()->name}}">  
+        <img src="{{$myselfs->profile_img_url}}" class="img-circle" alt="{{$myselfs->first_name}}">  
         @endif
           
 
           <p>
-           {{Auth::user()->name}}
+           {{$myselfs->first_name}}
            <small>Joined: {{Auth::user()->created_at}}</small>
           </p>
         </li>
@@ -95,7 +98,13 @@
         <!-- Menu Footer-->
         <li class="user-footer">
           <div class="float-left">
-            <a href="{{ url('users/profile/'.Auth::user()->id) }}" class="btn btn-default btn-flat">Profile</a>
+            @if(Auth::user()->user_type == "Admin")
+            <a href="{{ url('auth/admin/profile/'.Auth::user()->id) }}" class="btn btn-default btn-flat">Profile</a>
+          @elseif(Auth::user()->user_type == "Business")
+          <a href="{{ url('auth/business/profile/'.Auth::user()->id) }}" class="btn btn-default btn-flat">Profile</a>
+          @elseif(Auth::user()->user_type == "Customer")
+          <a href="{{ url('auth/customer/profile/'.Auth::user()->id) }}" class="btn btn-default btn-flat">Profile</a>
+          @endif
           </div>
           <div class="float-right">
             <a href="{{ route('logout') }}" class="btn btn-default btn-flat" 

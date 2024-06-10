@@ -296,173 +296,24 @@ a.book-btn, a.del-btn, a.edit-btn{
   
   
     //alert('working...');
-load_country_currency_list();
+  
+  
+  
+$("#boat_category_form").on("submit", function(e){
+  e.preventDefault();
 
-function load_country_currency_list(){
-    var action = site_url+"/auth/business/resorts/fetch_country_currency_list";
-    $.ajax({
-        headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-         },
-        type: "GET",
-        dataType: "json",
-        url: action,
-        beforeSend:function(){
-          Toast.fire({
-          icon: 'info',
-          title: 'Request processing...'
-           });
-          
-            // jQuery('.status').html(" Attempting to fetch LGA data...");
-        },
-        complete:function(){
-            
-        },
-        success:function(data){
-            if(data.status == true){
-
-          Toast.fire({
-          icon: 'success',
-          title: 'currencies fetched'
-           });
-            //   array.forEach(elements => as element{
-                
-            //   });
-
-            for(var i =0; i < data.data.values.length; i++){
-                $('#curr').append("<option value='"+data.data.values[i].currency+"'>"+data.data.values[i].currency+" - "+data.data.values[i].currency_symbol+"</option>");
-                // var opt = ;
-            }
-                
-                //console.log(opt);
-                //jQuery('.status').html(" ");
-                
-            }else if(data.status == false){
-              Toast.fire({
-              icon: 'error',
-              title: data.message
-              });
-                  
-                    }else{
-              Toast.fire({
-              icon: 'error',
-              title: data
-              });
-                        
-                              }
-        },
-error:function(jqXHR, exception){
-
-if(jqXHR.status === 0){
-Toast.fire({
-icon: 'warning',
-title: 'Please check your internet connection.'
-});
-// jQuery(".login-status").hide();
-// jQuery(".login-alert-error").fadeIn('slow');
-// jQuery('.login-alert-error').html('Please check your internet connection.');	
-
-}else if(jqXHR.status == 404){
-Toast.fire({
-icon: 'info',
-title: 'Request route not found.'
-});
-// jQuery(".login-status").hide();
-// jQuery(".login-alert-error").fadeIn('slow');
-// jQuery('.login-alert-error').html('Request route not found.');
-}else if(jqXHR.status == 500){
-Toast.fire({
-icon: 'error',
-title: 'Internal Server Error [500]'
-});
-// jQuery(".login-status").hide();
-// jQuery(".login-alert-error").fadeIn('slow');
-// jQuery('.login-alert-error').html('Internal Server Error [500]');
-
-}else if(jqXHR.status == 422){
-var errors = jqXHR.responseJSON;
-// $.each(json.responseJSON, function (key, value) {
-//     $('.'+key+'-error').html(value);
-// });
-Toast.fire({
-icon: 'error',
-title: errors.message
-});
-// jQuery(".login-status").hide();
-// jQuery(".login-alert-error").fadeIn('slow');
-// jQuery('.login-alert-error').html(errors.data.errors);
-
-}else if(exception === 'parsererror'){
-Toast.fire({
-icon: 'info',
-title: 'Requested JSON parse failed'
-});
-// jQuery(".login-status").hide();
-// jQuery(".login-alert-error").fadeIn('slow');
-// jQuery('.login-alert-error').html('Requested JSON parse failed');
-
-}else if(exception === 'timeout'){
-Toast.fire({
-icon: 'info',
-title: 'Request time out'
-});
-// jQuery(".login-status").hide();
-// jQuery(".login-alert-error").fadeIn('slow');
-// jQuery('.login-alert-error').html('Time out error');
-
-}else if(exception === 'abort'){
-Toast.fire({
-icon: 'info',
-title: 'Ajax request aborted'
-});
-// jQuery(".login-status").hide();
-// jQuery(".login-alert-error").fadeIn('slow');
-// jQuery('.login-alert-error').html('Ajax request aborted');
-
-}
-
-}
-      });
-}
-
-
-$('form#new-boat-form').on('submit', function(e){
-e.preventDefault();
 var action = $(this).attr('action');
-//var uid = jQuery("#uid").val();
+//var category = jQuery("#boat_category").val();
 //var name = jQuery("#name").val();
 //var title = jQuery("#title").val();
 //var content = jQuery("#blog-content").val();
 
 var formdata = new FormData(this);//create an instance for the form input fields
-if($.trim($('#category').val()) == ""){
-  $('#category').css('border', 'solid 1px red');
-  $('.category-error').show();
-  $('.category-error').html('*Select Category');
-}else if($.trim($('#registration').val()) == ""){
-     $('#registration').css('border', 'solid 1px red');
-     $('.registration-model-error').show();
-     $('.registration-model-error').html("*Required"); 
-}else if($.trim($('#model').val()) == ""){
-     $('#model').css('border', 'solid 1px red');
-     $('.boat-model-error').show();
-     $('.boat-model-error').html("*Required"); 
-}else if($.trim($('#capacity').val()) == ""){
-     $('#capacity').css('border', 'solid 1px red');
-     $('.capacity-model-error').show();
-     $('.capacity-model-error').html("*Required"); 
-}else if($.trim($('#price').val()) =="" ){
-  $('#price').css('border', 'solid 1px red'); 
-  $('.boat-price-error').show();
-  $('.boat-price-error').html('*Required');  
-}else if(!Number($('#price').val())){
-     $('#price').css('border', 'solid 1px red');
-     $('.boat-price-error').show()
-     $('.boat-price-error').html('*Price field accepts numbers only');  
-}else if($.trim($('#location').val()) == ""){
-    $('#location').css('border', 'solid 1px red');
-    $('.boat-location-error').show();
-    $('.boat-location-error').html("*Required");
+
+  if($.trim($('#boat_category').val()) == ""){
+    $('#boat_category').css('border', 'solid 1px red');
+     $('.boat-category-error').show(); 
+     $('.boat-category-error').html("*Required"); 
   }else{
     $.ajax({
           headers: {
@@ -484,18 +335,18 @@ if($.trim($('#category').val()) == ""){
          complete:function(){
              
          },
-        
+         
          success:function(data){
             if(data.status == true){
-          Toast.fire({
-          icon: 'success',
-          title: data.message
-           });
+              Toast.fire({
+              icon: 'success',
+              title: data.message
+              });
              
              $("#sendEmail").prop('disabled', false);
              $('#sendEmail').html("Submit");
-             window.location = site_url+"/auth/business/boats/edit_boat_img/"+data.data.values.id;
-            //location.reload();
+             //window.location = "{{ url('') }}/admin/resort_manager/edit_resort_img/"+resort;
+            location.reload();
              //loadResortModal(data.data.id,data.data.name);
             }else if(data.status == false){
               Toast.fire({
@@ -511,7 +362,7 @@ if($.trim($('#category').val()) == ""){
             }
               
          },
-       
+
          error:function(jqXHR, exception){
 
 if(jqXHR.status === 0){
@@ -582,82 +433,8 @@ title: 'Ajax request aborted'
 
 }
 
-}         
+} 
 
-         });
-  }
-
-});
-  
-  
-  
-  
-$("#boat_category_form").on("submit", function(e){
-  e.preventDefault();
-
-var action = $(this).attr('action');
-//var category = jQuery("#boat_category").val();
-//var name = jQuery("#name").val();
-//var title = jQuery("#title").val();
-//var content = jQuery("#blog-content").val();
-
-var formdata = new FormData(this);//create an instance for the form input fields
-
-  if($.trim($('#boat_category').val()) == ""){
-    $('#boat_category').css('border', 'solid 1px red');
-     $('.boat-category-error').show(); 
-     $('.boat-category-error').html("*Required"); 
-  }else{
-    $.ajax({
-          headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-       },
-         type: "POST",
-         dataType: "json",
-         url: action,
-         data: formdata,
-         cache: false,
-         contentType: false,
-         processData: false,
-         beforeSend:function(){
-             $("#sendEmail").prop('disabled', true);
-             $('#sendEmail').html("<img src='{{ asset('loaders/AjaxLoader.gif') }}' />");
-             //$(".blog-alert-success1").html("<div class='load'>Loading...</div>");
-         },
-         complete:function(){
-             $(".load").hide();
-         },
-         error:function(){
-          $(".alert-warning").css('display', 'block');
-          $(".alert-danger").css('display', 'none');
-          $(".upload-error").html("<img src='{{ asset('icons/ic_connections.png') }}' /> Please check your internet connection or refresh your browser");
-          $("#sendEmail").prop('disabled', false);
-          $('#sendEmail').html("Submit");
-         },
-         success:function(data){
-            if(data.success == true){
-             $(".alert-success").css('display', 'block');
-             $(".alert-danger").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-success").html(data.message);
-             $("#sendEmail").prop('disabled', false);
-             $('#sendEmail').html("Submit");
-             //window.location = "{{ url('') }}/admin/resort_manager/edit_resort_img/"+resort;
-            location.reload();
-             //loadResortModal(data.data.id,data.data.name);
-            }else if(data.success == false){
-              $(".alert-danger").css('display', 'block');
-              $(".alert-success").css('display', 'none');
-              $(".alert-warning").css('display', 'none');
-              $(".upload-error").html(data.message);
-            }else{
-             $(".alert-danger").css('display', 'block');
-             $(".alert-success").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-error").html(data);
-            }
-              
-         }
          });
   }
 
@@ -666,33 +443,131 @@ var formdata = new FormData(this);//create an instance for the form input fields
   });
   
 
-  function deleteBoat(id,name){
+  function deleteCategory(id,name){
+    var site_url = "{{ url('') }}";//full site domain url
+
+  var Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 9000
+    });
+
   var str = confirm('Do you really want to delete '+name+'?');
   if(str == true){
     $.ajax({
           headers: {
       'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
        },
-         type: "POST",
+         type: "DELETE",
          dataType: "json",
-         url: "{{ action('App\Http\Controllers\BoatController@delete_boat') }}",
-         data: {"id":id},
+         url: site_url+"/auth/admin/business/boats/remove_boat_category/"+id,
+        //  data: {"id":id},
          beforeSend:function(){  
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+          });
          },
          complete:function(){  
          },
-         error:function(){
-         },
+        
          success:function(data){
-            if(data.success == true){
-              location.reload();
-            }else if(data.success == false){
-              alert(data.message);
+            if(data.status == true){
+              Toast.fire({
+              icon: 'success',
+              title: data.message
+              });
+             
+             location.reload();
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
+
             }else{
-              alert(data);
+
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
+              
             }
               
-         }
+         },
+
+error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}
+
          }); 
   }
 }
@@ -708,7 +583,7 @@ var formdata = new FormData(this);//create an instance for the form input fields
   
   @include('inc.header2')
 
-  @include('inc.business-sidebar')
+  @include('inc.admin-sidebar')
 
 <!-- Content Wrapper. Contains page content -->
  <!-- Content Wrapper. Contains page content -->
@@ -716,8 +591,8 @@ var formdata = new FormData(this);//create an instance for the form input fields
   <!-- Content Header (Page header) -->
   <section class="content-header">
     <h1>
-      Business Account
-      <small>Boat owner</small>
+      Admin Account
+      <small>Boat categories</small>
     </h1>
     
   </section>
@@ -750,166 +625,57 @@ var formdata = new FormData(this);//create an instance for the form input fields
       <section class="col-lg-7 connectedSortable" id="blog-body">
        
 
-        
-
-        
-
-          <div class="card card-info">
-              <div class="card-header">
-                
-                <h3 class="card-title"><i class="fa fa-ship"></i> New Boat</h3>
-                <!-- tools box -->
-                <div class="float-right card-tools">
-                  
-                  <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <button type="button" class="btn btn-tool" data-card-widget="remove">
-                    <i class="fas fa-times"></i>
-                  </button>
-
-                </div>
-                <!-- /. tools -->
-              </div>
-              <div class="card-body">
-                <form id="new-boat-form" action="{{ action('App\Http\Controllers\BoatController@create_new_boat') }}" method="post" enctype="multipart/form-data">
-                 
-                 
-                  <div class="row">
-                    <div class="col-sm-6">
-                 <div class="form-group">
-                  <label>Select Category:</label>
-                      <span style="color: red;" class="category-error">*</span>
-                    <select id="category" name="category" class="form-control" onfocus="elementFocus(this.id, 'category-error')">
-                      <option value="" selected disabled>--Selet Boat Category--</option>
-                      @foreach ($categories as $category)
-                      <option value="{{$category->category}}">{{$category->category}}</option>
-                      @endforeach
-                    </select>
-                  </div>
-                    </div>
-
-                    <div class="col-sm-6">
-                      <div class="form-group">
-                       <label>Registration:</label>
-                           <span style="color: red;" class="registration-model-error">*</span>
-                         <input type="text" class="form-control" id="registration" name="registration" onfocus="elementFocus(this.id, 'boat-model-error')" placeholder="Enter Registration Number">
-                       </div>
-                         </div>
-
-                  </div>
-
-
-                 
-                 
-                 
-                  <div class="row">
-                    <div class="col-sm-6">
-                 <div class="form-group">
-                  <label>Model:</label>
-                      <span style="color: red;" class="boat-model-error">*</span>
-                    <input type="text" class="form-control" id="model" name="model" onfocus="elementFocus(this.id, 'boat-model-error')" placeholder="Enter Boat Model">
-                  </div>
-                    </div>
-                
-                    <div class="col-sm-6">
-                      <div class="form-group">
-                       <label>Capacity:</label>
-                           <span style="color: red;" class="capacity-model-error">*</span>
-                         <input type="number" class="form-control" id="capacity" name="capacity" placeholder="Enter passenger Seat capacity">
-                       </div>
-                         </div>
-
-                  </div>
-
-
-
-                  <div class="row">
-                    <div class="col-sm-6">
-                      <!-- text input -->
-                      <div class="form-group">
-                        <label>Currency:</label>
-                        <select type='hidden' id='curr' name='curr' class="form-control">
-                          <option value="{{$country->currency}}" selected>{{$country->currency}} - {{$country->currency_symbol}}</option>
-                          
-                        </select>
-                        
-                      </div>
-                    </div>
-                    <div class="col-sm-6">
-                  <div class="form-group">
-                    <label>Price/hour:</label>
-                      <span style="color: red;" class="boat-price-error">*</span>
-                      <input type="number" class="form-control" id="price" name="price" onfocus="elementFocus(this.id, 'boat-price-error')" placeholder="price">
-                    </div>
-                    </div>
-                  </div>
-                    
-                  <div class="row">
-                    <div class="col-sm-6">
-                    <div class="form-group">
-                      <label>Google Location:</label>
-                      <span style="color: red;" class="boat-location-error">*</span>
-                      <input type="text" class="form-control pac-target-input valid" id="location" name="location" onfocus="elementFocus(this.id, 'boat-location-error')" data-validation="required" placeholder="Enter a location" autocomplete="off">
-                     
-                  </div>
-                    </div>
-
-                    <div class="col-sm-6">
-                    <div class="form-group">
-                      <label>Youtube Link:</label>
-                      <span style="color: red; display: none" class="boat-youtube-error">(*Required)</span>
-                      <input type="url" class="form-control pac-target-input valid" id="youtube" name="youtube" placeholder="Enter youtube video link" autocomplete="off">
-                     
-                  </div>
-                  </div>
-
-                  </div>
-
-
-
-                  <div class="row">
-                    <div class="col-sm-6">
-                  <div class="form-group">
-                    <label>Address:</label>
-                      <span style="color: red; display: none" class="boat-address-error">(*Required)</span>
-                    <textarea id="address" name="address" placeholder="Location address"
-                              style="width: 100%; height: 70px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; padding: 10px;"></textarea>
-                  </div>
-                    </div>
-
-                    <div class="col-sm-6">
-                  <div class="form-group">
-                    <label>Description:</label>
-                      <span style="color: red; display: none" class="boat-desc-error">(*Required)</span>
-                  <textarea id="desc" name="desc" placeholder="Boat description"
-                              style="width: 100%; height: 70px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; padding: 10px;"></textarea>
-                  </div>
-                    </div>
-
-                    </div>
-
-                  
-                  
-                  
-
-
-                  
-
-
-
-                  <div class="card-footer clearfix">
-                    <button type="submit" class="pull-right btn btn-default" id="sendEmail">Submit
-                      <i class="fa fa-arrow-circle-right"></i></button>
-                  </div>
-                 
-                </form>
-              </div>
-              
+        <div class="card card-info">
+          <div class="card-header">
+            
+            <h3 class="card-title"><i class="fa fa-ship"></i> Create Boat Categories</h3>
+            <!-- tools box -->
+            <div class="float-right card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+              <button type="button" class="btn btn-tool" data-card-widget="remove">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
+            <!-- /. tools -->
+          </div>
+          <div class="card-body">
+            <form id="boat_category_form" action="{{ action('App\Http\Controllers\AdminBoatController@create_categories') }}" method="post" enctype="multipart/form-data">
+              
+              
+              <div class="form-group">
+                  <span style="color: red; display: none" class="boat-category-error">(*Required)</span>
+                <input type="text" class="form-control" id="boat_category" name="boat_category" onfocus="elementFocus(this.id, 'boat-category-error')" placeholder="Enter Boat Type">
+              </div>
+             
+              
+              <div class="card-footer clearfix">
+                <button type="submit" class="pull-right btn btn-default" >Create
+                  <i class="fa fa-arrow-circle-right"></i></button>
+              </div>
+             
+            </form>
+          </div>
 
+          <div class="form-group">
+            <fieldset class="resort-features">
+              <legend>Categories</legend>
+              @if(count($categories) > 0)
+              @foreach ($categories as $category)
+      <label>{{$category->category}}<a href="#" class="fas fa-trash" onclick="deleteCategory('{{$category->id}}','{{$category->category}}')" title="Delete {{$category->category}}"></a></label>       
+              @endforeach
+              @endif
+              
+              
+            </fieldset>
+           </div>
+          
+        </div>
 
-        <!-- quick email widget -->
+        
+
+          
         
 
       </section>
@@ -919,83 +685,7 @@ var formdata = new FormData(this);//create an instance for the form input fields
       
       
 
-      <section class="col-lg-5 connectedSortable">
-
-          <div class="card card-primary card-outline">
-              <div class="card-header with-border">
-                <h3 class="card-title">List of boats</h3>
-  
-                <div class="card-tools float-right">
-                 
-                  <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <button type="button" class="btn btn-tool" data-card-widget="remove">
-                    <i class="fas fa-times"></i>
-                  </button>
-
-                </div>
-              </div>
-              <!-- /.box-header -->
-              <div class="card-body">
-                <table id="example1" class="products-list product-list-in-box">
-                  <thead>
-                    <tr>
-                      <td>Boats</td>
-                    </tr>
-                  </thead>
-                  <tbody>
-              @if (count($business) > 0)
-               @foreach ($business as $boat)
-              
-                   
-               <tr class="item" >
-                <td width='500'>
-                <div class="product-img">
-                  <img src="{{$boat->img_1}}" alt="{{$boat->model}}">
-                </div>
-                <div class="product-info">
-                  <a href="{{ url('boats/boat/'.$boat->id) }}" class="product-title">{{$boat->model}}
-                    
-                    
-                    <span class="badge badge-warning float-right">
-                        {{$boat->curr}}{{$boat->price}}
-                      </span>
-                     
-                    </a>
-                  <span class="product-description">
-                        {{$boat->location}}
-                      </span>
-                     
-                      <a href="#" class="fa fa-trash del-btn" onclick="deleteBoat('{{$boat->id}}','{{$boat->title}}')" title="Delete {{$boat->title}}">Delete</a> | 
-                      <a href="{{ url('admin/boat_manager/edit_boat/'.$boat->id) }}" class="fa fa-edit edit-btn" title="Edit {{$boat->title}}">Edit</a> | 
-                      <a href="{{url('admin/boat_manager/bookings/'.$boat->id)}}" class="fa fa-book book-btn" title="Book {{$boat->title}}">Bookings</a>
-                       
-                </div>
-              </td>
-            </tr>
-              
-               @endforeach
-               @endif
-
-              </tbody>
-              <tfoot class="card-footer text-center">
-                <tr>
-                  <td>Boats</td>
-                </tr>
-              </tfoot>
-            </table>
-              </div>
-              <!-- /.box-body -->
-             
-              <!-- /.box-footer -->
-            </div>
-
       
-
-
-      </section>
-      <!-- right col -->
     </div>
     <!-- /.row (main row) -->
 

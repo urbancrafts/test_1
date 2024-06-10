@@ -4,7 +4,7 @@
 
     </div>
     <strong>Copyright &copy; <?php echo date('Y');?>  All rights
-    reserved {{$settings[0]->site_name}}. Powered by <a href="http://pignus.ng">Pignus</a>.</strong> 
+    reserved {{$settings->site_name}}. Powered by <a href="http://pignus.ng">Pignus</a>.</strong> 
   </footer>
 
   <!-- Control Sidebar -->

@@ -5,6 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+
 class BaseController extends Controller
 {
     /**
@@ -12,6 +16,15 @@ class BaseController extends Controller
         *
         * @return \Illuminate\Http\Response
         */
+
+        public function __construct(){
+            //Buffering the output
+         
+       
+     
+   
+       }
+
         public function sendResponse($result, $message)
         {
             $response = [

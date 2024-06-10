@@ -116,6 +116,11 @@
 
   <link rel="stylesheet" href="{{asset('plugins_2/select2/css/select2.min.css')}}">
   <link rel="stylesheet" href="{{asset('plugins_2/select2-bootstrap4-theme/select2-bootstrap4.min.css')}}">
+    
+  <link rel="stylesheet" href="{{ asset('plugins_2/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css')}}">
+  <!-- Toastr -->
+  <link rel="stylesheet" href="{{ asset('plugins_2/toastr/toastr.min.css')}}">
+
     <script type="text/javascript">
     
     const dp = new DayPilot.Scheduler("dp");
@@ -301,6 +306,15 @@ jQuery('#addroom').on("click", async (ev) => {
       });
 
 function createRoom(resort_id, room_id, room, capacity){
+  var site_url = "{{ url('') }}";//full site domain url
+
+  var Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 9000
+    });
+
   jQuery.ajax({
           headers: {
       'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content')
@@ -310,31 +324,90 @@ function createRoom(resort_id, room_id, room, capacity){
          url: "{{ action('App\Http\Controllers\ResortController@sub_room_create') }}",
          data: {resort_id: resort_id, room_id: room_id, room: room, capacity: capacity},
          beforeSend:function(){
-             jQuery(".alert-success").show();
-             jQuery('.alert-danger').hide();
-             jQuery(".alert-success").html("<div class='load'>Loading...</div>");
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+          });
          },
          complete:function(){
-             jQuery(".load").hide();
+             
          },
-         error:function(){
-         jQuery(".alert-success").hide();
-         jQuery(".alert-danger").show();
-         jQuery(".alert-danger").html("Please check your internet connection");
-         },
+         
          success:function(data){
-           if(data.success == true){
-          dp.resources.push(data.data);
+           if(data.status == true){
+          dp.resources.push(data.data.values);
           dp.update();
-         jQuery(".alert-danger").hide();
-         jQuery(".alert-success").show();
-         jQuery(".alert-success").html(data.message);
+
+          Toast.fire({
+          icon: 'success',
+          title: data.message
+          });
+         
            }else{
-         jQuery(".alert-success").hide();
-         jQuery(".alert-danger").show();
-         jQuery(".alert-danger").html(data.message);
+            Toast.fire({
+          icon: 'error',
+          title: data.message
+          });
+         
            }
-         }
+         },
+
+         error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+
+
+}
+
+}
+
          });
 }
 
@@ -372,23 +445,31 @@ function updateRoom(sub_id, name, capacity, status){
 
 }
 
-function deleteRoom(sub_id, name){
+function deleteRoom(room_id, sub_room_id, name){
   
+  var site_url = "{{ url('') }}";//full site domain url
+  var Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 9000
+    });
+
+    var str = confirm('Do you really want to delete '+name+'?');
+  if(str == true){
   
   jQuery.ajax({
           headers: {
       'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content')
        },
-         type: "POST",
+         type: "DELETE",
          dataType: "json",
-         url: "{{ action('App\Http\Controllers\ResortController@sub_room_delete') }}",
-         data: {room_id: sub_id},
-         cache: false,
-         
-         beforeSend:function(){
-             jQuery(".alert-success").show();
-             jQuery('.alert-danger').hide();
-             jQuery(".alert-success").html("<div class='load'>Loading...</div>");
+         url: site_url+"/auth/business/resorts/sub_room_delete/"+room_id+"/"+sub_room_id,
+         beforeSend:function(){  
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+           });
          },
          complete:function(){
              jQuery(".alert").hide();
@@ -404,6 +485,9 @@ function deleteRoom(sub_id, name){
              //alert(data.data[0]);
          }
          });
+
+
+        }
       
 
 }
@@ -638,15 +722,16 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
     
 		@include('inc.header2')
 
-  @include('inc.dashboard-side-bar2')
+    @include('inc.business-sidebar')
 
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <h1>
-        Booking Table
-        <small> {{$rooms[0]->room_no}}</small>
+        Business Account
+        <small>Resort owner: {{$resorts[0]->name}} ({{$rooms[0]->type}} : {{$rooms[0]->room_name}})</small>
+        
       </h1>
       
     </section>
@@ -671,16 +756,16 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
           
             <ul class="nav nav-pills nav-justified">
               <li class="nav-item">
-                <a class="nav-link " href="{{url('admin/resort_manager/room/'.$rooms[0]->shelter_id.'/'.$rooms[0]->id)}}">Edit form</a>
+                <a class="nav-link " href="{{url('auth/business/resorts/edit_room/'.$rooms[0]->resort_id.'/'.$rooms[0]->id)}}">Edit form</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link " href="{{url('admin/resort_manager/edit_room_img/'.$rooms[0]->shelter_id.'/'.$rooms[0]->id)}}">Images</a>
+                <a class="nav-link " href="{{url('auth/business/resorts/edit_room_img/'.$rooms[0]->resort_id.'/'.$rooms[0]->id)}}">Images</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link active" href="{{url('admin/resort_manager/book_room/'.$rooms[0]->shelter_id.'/'.$rooms[0]->id)}}">Bookings</a>
+                <a class="nav-link active" href="{{url('auth/business/resorts/room_booking_calendar/'.$rooms[0]->resort_id.'/'.$rooms[0]->id)}}">Bookings</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link " href="{{url('admin/resort_manager/create_room/'.$rooms[0]->shelter_id)}}">Resort</a>
+                <a class="nav-link " href="{{url('auth/business/resorts/create_room/'.$rooms[0]->resort_id)}}">Resort</a>
               </li>
               <!-- <li class="nav-item">
                 <a class="nav-link " href="https://localhost/backend/administrator/product_manager/edit_pricing/122">Product Pricing</a>
@@ -806,30 +891,7 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
               </thead>
               <tbody>
   
-              @foreach ($reservations as $reservation)
-              <tr>
-                <td>{{$reservation->name}}</td>
-                <td>{{$reservation->phone}}
-                </td>
-                <td>{{$reservation->type}}</td>
-                <td>{{$reservation->member}}</td>
-                <td>{{$reservation->curr}}{{$reservation->price}}</td>
-                <td>{{$reservation->checkin}}</td>
-                
-                <td>{{$reservation->checkout}}</td>
-                <td>@if ($reservation->approved == 1)
-                    yes
-                  @else
-                  no
-                  
-                  <a href="#" onclick="updateReservation('{{$reservation->id}}')" class="btn btn-special" title="Set Resort/Room Availability To (Booked) By Updating This Reservation">Update</a>
-                  
-                @endif
-              |
-              <a href="{{url('admin/reservation/'.$reservation->id)}}" class="btn btn-special" title="View this reservation"><i class="fa fa-eye"></i>View</a>
-              </td>
-              </tr>
-              @endforeach
+              
               </tbody>
               <tfoot>
                 <tr>
@@ -915,6 +977,11 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.html5.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.print.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.colVis.min.js')}}"></script>
+
+<!-- SweetAlert2 -->
+<script src="{{ asset('plugins_2/sweetalert2/sweetalert2.min.js')}}"></script>
+<!-- Toastr -->
+<script src="{{ asset('plugins_2/toastr/toastr.min.js')}}"></script>
 
 <!-- AdminLTE App -->
 <script src="{{asset('dist_2/js/adminlte.min.js')}}"></script>
@@ -1289,7 +1356,7 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
       const end = modal.result.end;
       const sub_room_id = modal.result.resource;
       const customer = modal.result.text;
-      const resort_id = "{{$rooms[0]->shelter_id}}";
+      const resort_id = "{{$rooms[0]->resort_id}}";
       const room_id =  "{{$rooms[0]->id}}";
       //const {data: result} = await DayPilot.Http.post("backend_reservation_create.php", e);
 
@@ -1359,7 +1426,7 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
   dp.onBeforeEventRender = (args) => {
       const start = new DayPilot.Date(args.data.start);
       const end = new DayPilot.Date(args.data.end);
-      const resort_id = "{{$rooms[0]->shelter_id}}";
+      const resort_id = "{{$rooms[0]->resort_id}}";
       const room_id =  "{{$rooms[0]->id}}";
 
       const today = DayPilot.Date.today();
@@ -1451,7 +1518,7 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
 
   function loadReservations() {
       
-      const resort_id = "{{$rooms[0]->shelter_id}}";
+      const resort_id = "{{$rooms[0]->resort_id}}";
       const room_id =  "{{$rooms[0]->id}}";
       //dp.events.load("{{ action('App\Http\Controllers\ReservationController@load_admin_room_reservation') }}");
     loadRoomReservation(resort_id, room_id);
@@ -1460,7 +1527,7 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
   }
 
   async function loadRooms() {
-        const resort_id = "{{$rooms[0]->shelter_id}}";
+        const resort_id = "{{$rooms[0]->resort_id}}";
         const room_id =  "{{$rooms[0]->id}}";
       //const {data} = loadRoomData(resort_id, room_id);
       //const {data} = await DayPilot.Http.get("{{ action('App\Http\Controllers\ResortController@sub_room') }}", { resort_id: resort_id, room_id: room_id });
@@ -1520,7 +1587,7 @@ function moveRoomReservation(id, newStart, newEnd, newResource){
         }
 
         const room = modal.result;
-        const resort_id = "{{$rooms[0]->shelter_id}}";
+        const resort_id = "{{$rooms[0]->resort_id}}";
         const room_id =  "{{$rooms[0]->id}}";
         const name = modal.result.name;
         const capacity = modal.result.capacity;
