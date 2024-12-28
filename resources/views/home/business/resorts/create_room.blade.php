@@ -261,73 +261,21 @@ a.book-btn, a.del-btn, a.edit-btn{
       </style>
 
 
+<link rel="stylesheet" href="{{ asset('plugins_2/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css')}}">
+<!-- Toastr -->
+<link rel="stylesheet" href="{{ asset('plugins_2/toastr/toastr.min.css')}}">
+
 <script type="text/javascript">
   $(document).ready(function(){
-  
-  
-  
-    $(function () {
-        $(".image-container-bi").on("change", ".uploadFile", function () {
-          var objFile = $(this);
-          var files = !!this.files ? this.files : [];
-          if (!files.length || !window.FileReader) return; // no file selected, or no FileReader support
-    
-          if (/^image/.test(files[0].type)) {
-            // only image file
-            var reader = new FileReader(); // instance of the FileReader
-            reader.readAsDataURL(files[0]); // read the local file
-    
-            reader.onloadend = function () {
-              // set image data as background of div
-              var fileSize = files[0].size;
-              objFile.siblings(".error-file-size").hide();
-              if (fileSize / (1024 * 1024) > 10) {
-                resetImage(objFile);
-                objFile
-                  .siblings(".error-file-size")
-                  .text("Banner Image must be under 10MB ")
-                  .show();
-              } else {
-                objFile
-                  .next(".file-input-button")
-                  .css("background-image", "url(" + this.result + ")");
-                objFile
-                  .next(".file-input-button")
-                  .find(".fa-plus-circle")
-                  .addClass("fa-times-circle");
-                objFile
-                  .next(".file-input-button")
-                  .find(".fa-plus-circle")
-                  .removeClass("fa-plus-circle");
-              }
-            };
-    
-            var img = new Image();
-            img.onload = function () {
-              if (this.width < 600 || this.height < 400) {
-                resetImage(objFile);
-                objFile
-                  .siblings(".error-file-size")
-                  .text("Image dimension should be above 600px x 400px ")
-                  .show();
-              }
-            };
-            var _URL = window.URL || window.webkitURL;
-            img.src = _URL.createObjectURL(files[0]);
-          }
-        });
-    
-        $(".image-container-bi").on("click", ".uploadFile", function (e) {
-          var objFile = $(this);
-          var files = !!this.files ? this.files : [];
-          if (!files.length || !window.FileReader) {
-            // do selection
-          } else {
-            e.preventDefault();
-            resetImage(objFile);
-          }
-        });
-      });
+
+    var site_url = "{{ url('') }}";//full site domain url
+
+    var Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 9000
+  });
   
   
   
@@ -378,44 +326,113 @@ if($.trim($('#name').val()) == ""){
          contentType: false,
          processData: false,
          beforeSend:function(){
-             $("#sendEmail").prop('disabled', true);
-             $('#sendEmail').html("<img src='{{ asset('loaders/AjaxLoader.gif') }}' />");
-             //$(".blog-alert-success1").html("<div class='load'>Loading...</div>");
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+          });
          },
          complete:function(){
-             $(".load").hide();
+            //  $(".load").hide();
          },
-         error:function(){
-          $(".alert-warning").css('display', 'block');
-          $(".alert-danger").css('display', 'none');
-          $(".upload-error").html("<img src='{{ asset('icons/ic_connections.png') }}' /> Please check your internet connection or refresh your browser");
-          $("#sendEmail").prop('disabled', false);
-          $('#sendEmail').html("Submit");
-         },
+         
          success:function(data){
-            if(data.success == true){
-             $(".alert-success").css('display', 'block');
-             $(".alert-danger").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-success").html(data.message);
-             $("#sendEmail").prop('disabled', false);
-             $('#sendEmail').html("Submit");
-             window.location = "{{ url('') }}/admin/resort_manager/edit_room_img/"+data.data.shelter_id+"/"+data.data.id;
+            if(data.status == true){
+              Toast.fire({
+              icon: 'success',
+              title: data.message
+              });
+            
+             window.location = site_url+"/auth/business/resorts/edit_room_img/"+data.data.values.resort_id+"/"+data.data.values.id;
             
              //loadResortModal(data.data.id,data.data.name);
-            }else if(data.success == false){
-              $(".alert-danger").css('display', 'block');
-              $(".alert-success").css('display', 'none');
-              $(".alert-warning").css('display', 'none');
-              $(".upload-error").html(data.message);
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
+              
             }else{
-             $(".alert-danger").css('display', 'block');
-             $(".alert-success").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-error").html(data);
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
             }
               
-         }
+         },
+    
+  
+error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.data.errors
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}
+
+
          });
 
 }
@@ -430,32 +447,122 @@ if($.trim($('#name').val()) == ""){
   
 
   function deleteRoom(resort,id,name){
+    var site_url = "{{ url('') }}";//full site domain url
+  var Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 9000
+    });
   var str = confirm('Do you really want to delete '+name+'?');
   if(str == true){
     $.ajax({
           headers: {
       'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
        },
-         type: "POST",
+         type: "DELETE",
          dataType: "json",
-         url: "{{ action('App\Http\Controllers\ResortController@delete_room') }}",
-         data: {"resort":resort, "uid":id},
+         url: site_url+"/auth/business/resorts/delete_room/"+resort+"/"+id,
          beforeSend:function(){  
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+           });
          },
          complete:function(){  
          },
-         error:function(){
-         },
          success:function(data){
-            if(data.success == true){
+          if(data.status == true){
+              Toast.fire({
+              icon: 'success',
+              title: data.message
+              });
               location.reload();
-            }else if(data.success == false){
-              alert(data.message);
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
+            
             }else{
-              alert(data);
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
             }
               
-         }
+         },
+
+         error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}
          }); 
   }
 } 
@@ -468,7 +575,7 @@ if($.trim($('#name').val()) == ""){
 
   @include('inc.header2')
 
-  @include('inc.dashboard-side-bar2')
+  @include('inc.business-sidebar')
 
 
 
@@ -477,8 +584,8 @@ if($.trim($('#name').val()) == ""){
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <h1>
-        Resort
-        <small>Edit {{$resorts2[0]->name}}</small>
+        Business Account
+        <small>Resort owner: {{$resorts2[0]->name}}</small>
       </h1>
       
     </section>
@@ -498,16 +605,16 @@ if($.trim($('#name').val()) == ""){
             <div class="card card-body p-0" style="border: 2px solid #E51924; border-radius: 0px">
                 <ul class="nav nav-pills nav-justified">
   <li class="nav-item">
-    <a class="nav-link " href="{{url('admin/resort_manager/resort/'.$resorts2[0]->id)}}">Edit form</a>
+    <a class="nav-link " href="{{url('auth/business/resorts/edit_resort/'.$resorts2[0]->id)}}">Edit form</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link " href="{{url('admin/resort_manager/edit_resort_img/'.$resorts2[0]->id)}}">Images</a>
+    <a class="nav-link " href="{{url('auth/business/resorts/edit_resort_img/'.$resorts2[0]->id)}}">Images</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link " href="{{url('admin/resort_manager/edit_resort_features/'.$resorts2[0]->id)}}">Features</a>
+    <a class="nav-link " href="{{url('auth/business/resorts/edit_resort_features/'.$resorts2[0]->id)}}">Features</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link active" href="{{url('admin/resort_manager/create_room/'.$resorts2[0]->id)}}">Rooms</a>
+    <a class="nav-link active" href="{{url('auth/business/resorts/create_room/'.$resorts2[0]->id)}}">Rooms</a>
   </li>
   <!-- <li class="nav-item">
     <a class="nav-link " href="https://localhost/backend/administrator/product_manager/edit_pricing/122">Product Pricing</a>
@@ -565,13 +672,30 @@ if($.trim($('#name').val()) == ""){
                   <form id="create-room-form" action="{{ action('App\Http\Controllers\ResortController@upload_rooms_info') }}" method="post" enctype="multipart/form-data">
                    
                    <input type='hidden' id='resort' name='resort' value='{{$resorts2[0]->id}}' />
-                   <input type='hidden' id='location' name='location' value='{{$resorts2[0]->location}}' />
+                   <input type='hidden' id='location' name='location' value='{{$resorts2[0]->map_location}}' />
                    
+                   <div class="row">
+                    <div class="col-sm-6">
                     <div class="form-group">
                       <label>Room Title</label>
                         <span style="color: red;" class="resort-name-error">*</span>
                       <input type="text" class="form-control" id="name" name="name" placeholder="Title(Room/Suit)" >
                     </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                      <!-- text input -->
+                      <div class="form-group">
+                        <label>Type</label>
+                        <select type='hidden' id='type' name='type' class="form-control">
+                          <option value="Room" selected>Room</option>
+                          <option value="Suite">Suite</option>
+                        </select>
+                        
+                      </div>
+                    </div>
+                    </div>
+                   
 
 
                     <div class="row">
@@ -579,28 +703,8 @@ if($.trim($('#name').val()) == ""){
                         <!-- text input -->
                         <div class="form-group">
                           <label>Currency</label>
-                          <select type='hidden' id='curr' name='curr' class="form-control">
-                            @if( $resorts2[0]->curr == 'NGN')
-                            <option value="{{$resorts2[0]->curr}}" selected>{{$resorts2[0]->curr}} - ₦</option>
-                            <option value="USD">USD - $</option>
-                            <option value="EUR">EUR - €</option>
-                            <option value="GBP">GBP - £</option>
-                            @elseif($resorts2[0]->curr == 'USD')
-                            <option value="{{$resorts2[0]->curr}}" selected>{{$resorts2[0]->curr}} - $</option>
-                            <option value="NGN">NGN - ₦</option>
-                            <option value="EUR">EUR - €</option>
-                            <option value="GBP">GBP - £</option>
-                            @elseif($resorts2[0]->curr == 'EUR')
-                            <option value="{{$resorts2[0]->curr}}" selected>{{$resorts2[0]->curr}} - €</option>
-                            <option value="NGN">NGN - ₦</option>
-                            <option value="USD">USD - $</option>
-                            <option value="GBP">GBP - £</option>
-                            @elseif($resorts2[0]->curr == 'GBP')
-                            <option value="{{$resorts2[0]->curr}}" selected>{{$resorts2[0]->curr}} - £</option>
-                            <option value="NGN">NGN - ₦</option>
-                            <option value="USD">USD - $</option>
-                            <option value="EUR">EUR - €</option>
-                            @endif
+                          <select type='hidden' id='curr' name='curr' class="form-control" disabled>
+                            <option value="{{$resorts2[0]->curr}}" selected>{{$resorts2[0]->curr}}</option>
                           </select>
                           
                         </div>
@@ -696,18 +800,21 @@ if($.trim($('#name').val()) == ""){
                     <tbody>
                       
                  @foreach ($rooms as $room)
-                 @if (Auth::user()->role == 1 || Auth::user()->user_type == "admin" || $room->created_by == Auth::user()->id)
+                 
                  <tr class="item" >
                   <td width='500'>
                   <div class="product-img">
-                    <img src="{{$room->img_1}}" alt="{{$room->room_no}}">
+                    @if ($room->img_1 != null)
+                    <img src="{{$room->img_1}}" alt="{{$room->room_name}}">
+                    @endif
+                    
                   </div>
                   <div class="product-info">
-                    <a href="{{ url('admin/room/'.$room->shelter_id.'/'.$room->id) }}" class="product-title">{{$room->room_no}}
+                    <a href="{{ url('auth/business/resorts/edit_room/'.$room->resort_id.'/'.$room->id) }}" class="product-title">{{$room->room_name}}
                       
-                      @if ($room->amount != "")
+                      @if ($room->price != "")
                       <span class="badge badge-warning float-right">
-                          {{$room->curr}}{{$room->amount}}
+                          {{$room->curr}}{{$room->price}}
                         </span>
                       @endif  
                       </a>
@@ -715,14 +822,14 @@ if($.trim($('#name').val()) == ""){
                           {{$room->location}}
                         </span>
                         
-                     <a href="#" class="fa fa-trash del-btn" onclick="deleteRoom('{{$room->shelter_id}}','{{$room->id}}','{{$room->room_no}}')" title="Delete {{$room->room_no}}">Delete</a> | 
-                     <a href="{{ url('admin/resort_manager/room/'.$room->shelter_id.'/'.$room->id) }}" class="fa fa-edit edit-btn" title="Edit {{$room->room_no}}">Edit</a> | 
-                     <a href="{{url('admin/resort_manager/book_room/'.$room->shelter_id.'/'.$room->id)}}" class="fa fa-calendar book-btn" title="{{$room->room_no}} bookings">Bookings</a>
+                     <a href="#" class="fa fa-trash del-btn" onclick="deleteRoom('{{$room->resort_id}}','{{$room->id}}','{{$room->room_name}}')" title="Delete {{$room->room_name}}">Delete</a> | 
+                     <a href="{{ url('auth/business/resorts/edit_room/'.$room->resort_id.'/'.$room->id) }}" class="fa fa-edit edit-btn" title="Edit {{$room->room_name}}">Edit</a> | 
+                     <a href="{{url('auth/business/resorts/room_booking_calendar/'.$room->resort_id.'/'.$room->id)}}" class="fa fa-calendar book-btn" title="{{$room->room_name}} bookings">Bookings</a>
                      
                   </div>
                 </td>
               </tr>
-                @endif
+                
                  @endforeach
                  
                 </tbody>
@@ -814,6 +921,11 @@ if($.trim($('#name').val()) == ""){
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.html5.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.print.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.colVis.min.js')}}"></script>
+
+<!-- SweetAlert2 -->
+<script src="{{ asset('plugins_2/sweetalert2/sweetalert2.min.js')}}"></script>
+<!-- Toastr -->
+<script src="{{ asset('plugins_2/toastr/toastr.min.js')}}"></script>
 
 <!-- AdminLTE App -->
 <script src="{{asset('dist_2/js/adminlte.min.js')}}"></script>

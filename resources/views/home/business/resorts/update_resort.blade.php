@@ -259,6 +259,10 @@
       
       </style>
 
+<link rel="stylesheet" href="{{ asset('plugins_2/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css')}}">
+<!-- Toastr -->
+<link rel="stylesheet" href="{{ asset('plugins_2/toastr/toastr.min.css')}}">
+
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPxcQlAZ_LWl4EZtHU27zTv3CFpCaSQ_A&libraries=places&callback=initAutocomplete" async defer></script>
 <script type="text/javascript">
   function initAutocomplete() {
@@ -284,157 +288,149 @@
 <script type="text/javascript">
   $(document).ready(function(){
   
-  
-  
-    $(function () {
-        $(".image-container-bi").on("change", ".uploadFile", function () {
-          var objFile = $(this);
-          var files = !!this.files ? this.files : [];
-          if (!files.length || !window.FileReader) return; // no file selected, or no FileReader support
-    
-          if (/^image/.test(files[0].type)) {
-            // only image file
-            var reader = new FileReader(); // instance of the FileReader
-            reader.readAsDataURL(files[0]); // read the local file
-    
-            reader.onloadend = function () {
-              // set image data as background of div
-              var fileSize = files[0].size;
-              objFile.siblings(".error-file-size").hide();
-              if (fileSize / (1024 * 1024) > 10) {
-                resetImage(objFile);
-                objFile
-                  .siblings(".error-file-size")
-                  .text("Banner Image must be under 10MB ")
-                  .show();
-              } else {
-                objFile
-                  .next(".file-input-button")
-                  .css("background-image", "url(" + this.result + ")");
-                objFile
-                  .next(".file-input-button")
-                  .find(".fa-plus-circle")
-                  .addClass("fa-times-circle");
-                objFile
-                  .next(".file-input-button")
-                  .find(".fa-plus-circle")
-                  .removeClass("fa-plus-circle");
-              }
-            };
-    
-            var img = new Image();
-            img.onload = function () {
-              if (this.width < 600 || this.height < 400) {
-                resetImage(objFile);
-                objFile
-                  .siblings(".error-file-size")
-                  .text("Image dimension should be above 600px x 400px ")
-                  .show();
-              }
-            };
-            var _URL = window.URL || window.webkitURL;
-            img.src = _URL.createObjectURL(files[0]);
-          }
-        });
-    
-        $(".image-container-bi").on("click", ".uploadFile", function (e) {
-          var objFile = $(this);
-          var files = !!this.files ? this.files : [];
-          if (!files.length || !window.FileReader) {
-            // do selection
-          } else {
-            e.preventDefault();
-            resetImage(objFile);
-          }
-        });
-      });
-  
-  
-  
-    function loadResortModal(id,name){
-    $("#modal-elemet").show();
-    $("#modal-elemet").html("\r\n<div class=\'modal-content \'><div class=\'modal-header\'><span class=\'close\'>&times;<\/span><h2>"+name+" Resort Image Uploads<\/h2><\/div><div class=\'modal-body\'> <form id=\'resort-image-upload-form\' action=\'{{ action('App\Http\Controllers\AjaxRequestController@resort_image_upload') }}\' method=\'post\' enctype=\'multipart form-data\'>  <input type=\'hidden\' id=\'resort\' name=\'resort\' value=\'"+id+"\' /> <div class=\'col-xs-12 image-container image-container-bi\' id=\'add-property-image-container\'><div><p>Images <span class=\'dim-size\'>Supported Formats JPG, JPEG, PNG 600 X 400 PX (Max 10 MB)<\/span><\/p><div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' name=\'images\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title2\' value=\'title2\'><input type=\'hidden\' name=\'main_image\' id=\'main-image2\' value=\'false\'><span class=\'help-block form-error\'>This is a required field<\/span><\/div>\r\n  <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title3\' value=\'title3\'><input type=\'hidden\' name=\'main_image\' id=\'main-image3\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title4\' value=\'title4\'><input type=\'hidden\' name=\'main_image\' id=\'main-image4\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title5\' value=\'title5\'><input type=\'hidden\' name=\'main_image\' id=\'main-image5\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title6\' value=\'title6\'><input type=\'hidden\' name=\'main_image\' id=\'main-image6\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title7\' value=\'title7\'><input type=\'hidden\' name=\'main_image\' id=\'main-image7\' value=\'false\'><\/div>\r\n <\/div><\/div>\r\n <div class=\'box-footer clearfix\'><button type=\'submit\' class=\'pull-right btn btn-default\' id=\'sendEmail\'>Submit<i class=\'fa fa-arrow-circle-right\'><\/i><\/button><\/div><span class=\'alert alert-danger blog-alert-danger\' style=\'display: none\'><\/span><span class=\'alert alert-success blog-alert-success\' style=\'display: none\'><\/span> <\/form> <\/div> <div class=\'modal-footer\'><\/div><\/div>");
-  }
-  
+    var site_url = "{{ url('') }}";//full site domain url
 
-    $('form#resort-form').on('submit', function(e){
-  e.preventDefault();
-  var action = $(this).attr('action');
-  //var uid = jQuery("#uid").val();
-  //var name = jQuery("#name").val();
-  //var title = jQuery("#title").val();
-  //var content = jQuery("#blog-content").val();
-  
-  var formdata = new FormData(this);//create an instance for the form input fields
-  
-  if($.trim($('#name').val()) == ""){
-       $('#name').css('border', 'solid 1px red');
-       $('.resort-name-error').show();
-  }else if($.trim($('#price').val()) != "" && !Number($('#price').val())){
-       $('#price').css('border', 'solid 1px red');
-       $('.resort-price-error').show();
-       $('.resort-price-error').html('(*Price field accepts numeric value only)');  
-  }else if($.trim($('#location').val()) == ""){
-    $('#location').css('border', 'solid 1px red');
-    $('.resort-location-error').show();
-  }else if($.trim($('#address').val()) == ""){
-    $('#address').css('border', 'solid 1px red');
-    $('.resort-address-error').show();
-  }else if($.trim($('#desc').val()) == ""){
-    $('#desc').css('border', 'solid 1px red');
-    $('.resort-desc-error').show();
-  }else if($.trim($('#img-1').val()) == ""){
-    $('.img-1').css('border-color', 'red');
-    $('.form-error').show();
-  }else{
-       $.ajax({
-            headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-         },
-           type: "POST",
-           dataType: "json",
-           url: action,
-           data: formdata,
-           cache: false,
-           contentType: false,
-           processData: false,
-           beforeSend:function(){
-               $(".blog-alert-success").show();
-               $('.blog-alert-danger').hide();
-               $(".blog-alert-success").html("<div class='load'>Loading...</div>");
-           },
-           complete:function(){
-               $(".load").hide();
-           },
-           error:function(){
-           $(".blog-alert-success").hide();
-           $(".blog-alert-danger").show();
-           $(".blog-alert-danger").html("Please check your internet connection");
-           },
-           success:function(data){
-              if(data.success == true){
-               $("#sendEmail").prop('disabled', true);
-               $(".blog-alert-success").show();
-               $(".blog-alert-success").html(data.message);
-               location.reload();
-               //loadResortModal(data.data.id,data.data.name);
-              }else if(data.success == false){
-                $(".blog-alert-success").hide();
-                $(".blog-alert-danger").show();
-                $(".blog-alert-danger").html(data.message);
-              }else{
-                $(".blog-alert-success").hide();
-                $(".blog-alert-danger").show();
-                $(".blog-alert-danger").html(data);
-              }
-                
-           }
-           });
-  
-  }
-  
+var Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 9000
   });
 
+//alert('working...');
+load_country_currency_list();
+
+function load_country_currency_list(){
+  var action = site_url+"/auth/business/resorts/fetch_country_currency_list";
+  $.ajax({
+      headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+       },
+      type: "GET",
+      dataType: "json",
+      url: action,
+      beforeSend:function(){
+        Toast.fire({
+        icon: 'info',
+        title: 'Request processing...'
+         });
+        
+          // jQuery('.status').html(" Attempting to fetch LGA data...");
+      },
+      complete:function(){
+          
+      },
+      success:function(data){
+          if(data.status == true){
+
+        Toast.fire({
+        icon: 'success',
+        title: 'currencies fetched'
+         });
+          //   array.forEach(elements => as element{
+              
+          //   });
+
+          for(var i =0; i < data.data.values.length; i++){
+              $('#curr').append("<option value='"+data.data.values[i].currency+"'>"+data.data.values[i].currency+" - "+data.data.values[i].currency_symbol+"</option>");
+              // var opt = ;
+          }
+              
+              //console.log(opt);
+              //jQuery('.status').html(" ");
+              
+          }else if(data.status == false){
+            Toast.fire({
+            icon: 'error',
+            title: data.message
+            });
+                
+                  }else{
+            Toast.fire({
+            icon: 'error',
+            title: data
+            });
+                      
+                            }
+      },
+error:function(jqXHR, exception){
+
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.data.errors
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}
+    });
+}
+
+  
+    
+
+    
 
 $('form#update-resort-form').on('submit', function(e){
 e.preventDefault();
@@ -476,44 +472,110 @@ if($.trim($('#name').val()) == ""){
          contentType: false,
          processData: false,
          beforeSend:function(){
-             $("#sendEmail").prop('disabled', true);
-             $('#sendEmail').html("<img src='{{ asset('loaders/AjaxLoader.gif') }}' />");
-             //$(".blog-alert-success1").html("<div class='load'>Loading...</div>");
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+          });
          },
          complete:function(){
-             $(".load").hide();
+             
          },
-         error:function(){
-          $(".alert-warning").css('display', 'block');
-          $(".alert-danger").css('display', 'none');
-          $(".upload-error").html("<img src='{{ asset('icons/ic_connections.png') }}' /> Please check your internet connection or refresh your browser");
-          $("#sendEmail").prop('disabled', false);
-          $('#sendEmail').html("Submit");
-         },
+         
          success:function(data){
-            if(data.success == true){
-             $(".alert-success").css('display', 'block');
-             $(".alert-danger").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-success").html(data.message);
-             $("#sendEmail").prop('disabled', false);
-             $('#sendEmail').html("Submit");
-             window.location = "{{ url('') }}/admin/resort_manager/edit_resort_img/"+resort;
+            if(data.status == true){
+              $("#sendEmail").prop('disabled', true);
+             Toast.fire({
+             icon: 'success',
+             title: data.message
+             });
+             
+             window.location = site_url+"/auth/business/resorts/edit_resort_img/"+data.data.values.id;           
             
              //loadResortModal(data.data.id,data.data.name);
-            }else if(data.success == false){
-              $(".alert-danger").css('display', 'block');
-              $(".alert-success").css('display', 'none');
-              $(".alert-warning").css('display', 'none');
-              $(".upload-error").html(data.message);
+            }else if(data.status == false){
+             Toast.fire({
+             icon: 'error',
+             title: data.message
+             });
             }else{
-             $(".alert-danger").css('display', 'block');
-             $(".alert-success").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-error").html(data);
+              Toast.fire({
+             icon: 'error',
+             title: data
+             });
             }
               
-         }
+         },
+  
+error:function(jqXHR, exception){
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.data.errors
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}
          });
 
 }
@@ -535,7 +597,7 @@ if($.trim($('#name').val()) == ""){
     
     @include('inc.header2')
 
-    @include('inc.dashboard-side-bar2')
+    @include('inc.business-sidebar')
 
 
 
@@ -545,8 +607,8 @@ if($.trim($('#name').val()) == ""){
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <h1>
-        Resort
-        <small>Edit {{$resorts2[0]->name}}</small>
+        Business Account
+        <small>Resort owner: {{$resorts2[0]->name}}</small>
       </h1>
       
     </section>
@@ -566,16 +628,16 @@ if($.trim($('#name').val()) == ""){
             <div class="card card-body p-0" style="border: 2px solid #E51924; border-radius: 0px">
                 <ul class="nav nav-pills nav-justified">
   <li class="nav-item">
-    <a class="nav-link active" href="{{url('admin/resort_manager/resort/'.$resorts2[0]->id)}}">Edit form</a>
+    <a class="nav-link active" href="{{url('auth/business/resorts/edit_resort/'.$resorts2[0]->id)}}">Edit form</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link " href="{{url('admin/resort_manager/edit_resort_img/'.$resorts2[0]->id)}}">Images</a>
+    <a class="nav-link " href="{{url('auth/business/resorts/edit_resort_img/'.$resorts2[0]->id)}}">Images</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link " href="{{url('admin/resort_manager/edit_resort_features/'.$resorts2[0]->id)}}">Features</a>
+    <a class="nav-link " href="{{url('auth/business/resorts/edit_resort_features/'.$resorts2[0]->id)}}">Features</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link " href="{{url('admin/resort_manager/create_room/'.$resorts2[0]->id)}}">Rooms</a>
+    <a class="nav-link " href="{{url('auth/business/resorts/create_room/'.$resorts2[0]->id)}}">Rooms</a>
   </li>
   <!-- <li class="nav-item">
     <a class="nav-link " href="https://localhost/backend/administrator/product_manager/edit_pricing/122">Product Pricing</a>
@@ -669,7 +731,7 @@ if($.trim($('#name').val()) == ""){
                       <div class="form-group">
                         <label>Google Location:</label>
                         <span style="color: red;" class="resort-location-error">*</span>
-                        <input type="text" class="form-control pac-target-input valid" id="location" name="location" value="{{$resorts2[0]->location}}" data-validation="required" placeholder="Enter a location" autocomplete="off">
+                        <input type="text" class="form-control pac-target-input valid" id="location" name="location" value="{{$resorts2[0]->map_location}}" data-validation="required" placeholder="Enter a location" autocomplete="off">
                        
                     </div>
                       </div>
@@ -824,6 +886,11 @@ if($.trim($('#name').val()) == ""){
 <!-- overlayScrollbars -->
 <script src="{{asset('plugins_2/overlayScrollbars/js/jquery.overlayScrollbars.min.js')}}"></script>
 
+
+<!-- SweetAlert2 -->
+<script src="{{ asset('plugins_2/sweetalert2/sweetalert2.min.js')}}"></script>
+<!-- Toastr -->
+<script src="{{ asset('plugins_2/toastr/toastr.min.js')}}"></script>
 
 
 <!-- AdminLTE App -->

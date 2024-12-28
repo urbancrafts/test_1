@@ -255,7 +255,10 @@ a.book-btn, a.del-btn, a.edit-btn{
   
   
   </style>
-  
+  <link rel="stylesheet" href="{{ asset('plugins_2/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css')}}">
+  <!-- Toastr -->
+  <link rel="stylesheet" href="{{ asset('plugins_2/toastr/toastr.min.css')}}">
+
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPxcQlAZ_LWl4EZtHU27zTv3CFpCaSQ_A&libraries=places&callback=initAutocomplete" async defer></script>
   <script type="text/javascript">
     function initAutocomplete() {
@@ -280,74 +283,150 @@ a.book-btn, a.del-btn, a.edit-btn{
   <script type="text/javascript">
   $(document).ready(function(){
   
+  var site_url = "{{ url('') }}";//full site domain url
+
+  var Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 9000
+    });
+  
+    
   
   
-    $(function () {
-        $(".image-container-bi").on("change", ".uploadFile", function () {
-          var objFile = $(this);
-          var files = !!this.files ? this.files : [];
-          if (!files.length || !window.FileReader) return; // no file selected, or no FileReader support
-    
-          if (/^image/.test(files[0].type)) {
-            // only image file
-            var reader = new FileReader(); // instance of the FileReader
-            reader.readAsDataURL(files[0]); // read the local file
-    
-            reader.onloadend = function () {
-              // set image data as background of div
-              var fileSize = files[0].size;
-              objFile.siblings(".error-file-size").hide();
-              if (fileSize / (1024 * 1024) > 10) {
-                resetImage(objFile);
-                objFile
-                  .siblings(".error-file-size")
-                  .text("Banner Image must be under 10MB ")
-                  .show();
-              } else {
-                objFile
-                  .next(".file-input-button")
-                  .css("background-image", "url(" + this.result + ")");
-                objFile
-                  .next(".file-input-button")
-                  .find(".fa-plus-circle")
-                  .addClass("fa-times-circle");
-                objFile
-                  .next(".file-input-button")
-                  .find(".fa-plus-circle")
-                  .removeClass("fa-plus-circle");
-              }
-            };
-    
-            var img = new Image();
-            img.onload = function () {
-              if (this.width < 600 || this.height < 400) {
-                resetImage(objFile);
-                objFile
-                  .siblings(".error-file-size")
-                  .text("Image dimension should be above 600px x 400px ")
-                  .show();
-              }
-            };
-            var _URL = window.URL || window.webkitURL;
-            img.src = _URL.createObjectURL(files[0]);
-          }
-        });
-    
-        $(".image-container-bi").on("click", ".uploadFile", function (e) {
-          var objFile = $(this);
-          var files = !!this.files ? this.files : [];
-          if (!files.length || !window.FileReader) {
-            // do selection
-          } else {
-            e.preventDefault();
-            resetImage(objFile);
-          }
-        });
+    //alert('working...');
+load_country_currency_list();
+
+function load_country_currency_list(){
+    var action = site_url+"/auth/business/resorts/fetch_country_currency_list";
+    $.ajax({
+        headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+         },
+        type: "GET",
+        dataType: "json",
+        url: action,
+        beforeSend:function(){
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+           });
+          
+            // jQuery('.status').html(" Attempting to fetch LGA data...");
+        },
+        complete:function(){
+            
+        },
+        success:function(data){
+            if(data.status == true){
+
+          Toast.fire({
+          icon: 'success',
+          title: 'currencies fetched'
+           });
+            //   array.forEach(elements => as element{
+                
+            //   });
+
+            for(var i =0; i < data.data.values.length; i++){
+                $('#curr').append("<option value='"+data.data.values[i].currency+"'>"+data.data.values[i].currency+" - "+data.data.values[i].currency_symbol+"</option>");
+                // var opt = ;
+            }
+                
+                //console.log(opt);
+                //jQuery('.status').html(" ");
+                
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
+                  
+                    }else{
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
+                        
+                              }
+        },
+error:function(jqXHR, exception){
+
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}
       });
-  
-  
-  
-      $('form#new-boat-form').on('submit', function(e){
+}
+
+
+$('form#new-boat-form').on('submit', function(e){
 e.preventDefault();
 var action = $(this).attr('action');
 //var uid = jQuery("#uid").val();
@@ -360,10 +439,18 @@ if($.trim($('#category').val()) == ""){
   $('#category').css('border', 'solid 1px red');
   $('.category-error').show();
   $('.category-error').html('*Select Category');
+}else if($.trim($('#registration').val()) == ""){
+     $('#registration').css('border', 'solid 1px red');
+     $('.registration-model-error').show();
+     $('.registration-model-error').html("*Required"); 
 }else if($.trim($('#model').val()) == ""){
      $('#model').css('border', 'solid 1px red');
      $('.boat-model-error').show();
      $('.boat-model-error').html("*Required"); 
+}else if($.trim($('#capacity').val()) == ""){
+     $('#capacity').css('border', 'solid 1px red');
+     $('.capacity-model-error').show();
+     $('.capacity-model-error').html("*Required"); 
 }else if($.trim($('#price').val()) =="" ){
   $('#price').css('border', 'solid 1px red'); 
   $('.boat-price-error').show();
@@ -389,44 +476,114 @@ if($.trim($('#category').val()) == ""){
          contentType: false,
          processData: false,
          beforeSend:function(){
-             $("#sendEmail").prop('disabled', true);
-             $('#sendEmail').html("<img src='{{ asset('loaders/AjaxLoader.gif') }}' />");
-             //$(".blog-alert-success1").html("<div class='load'>Loading...</div>");
+          Toast.fire({
+          icon: 'info',
+          title: 'Request processing...'
+           });
          },
          complete:function(){
-             $(".load").hide();
+             
          },
-         error:function(){
-          $(".alert-warning").css('display', 'block');
-          $(".alert-danger").css('display', 'none');
-          $(".upload-error").html("<img src='{{ asset('icons/ic_connections.png') }}' /> Please check your internet connection or refresh your browser");
-          $("#sendEmail").prop('disabled', false);
-          $('#sendEmail').html("Submit");
-         },
+        
          success:function(data){
-            if(data.success == true){
-             $(".alert-success").css('display', 'block');
-             $(".alert-danger").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-success").html(data.message);
+            if(data.status == true){
+          Toast.fire({
+          icon: 'success',
+          title: data.message
+           });
+             
              $("#sendEmail").prop('disabled', false);
              $('#sendEmail').html("Submit");
-             window.location = "{{ url('') }}/admin/boat_manager/edit_boat_img/"+data.data.id;
+             window.location = site_url+"/auth/business/boats/edit_boat_img/"+data.data.values.id;
             //location.reload();
              //loadResortModal(data.data.id,data.data.name);
-            }else if(data.success == false){
-              $(".alert-danger").css('display', 'block');
-              $(".alert-success").css('display', 'none');
-              $(".alert-warning").css('display', 'none');
-              $(".upload-error").html(data.message);
+            }else if(data.status == false){
+              Toast.fire({
+              icon: 'error',
+              title: data.message
+              });
+              
             }else{
-             $(".alert-danger").css('display', 'block');
-             $(".alert-success").css('display', 'none');
-             $(".alert-warning").css('display', 'none');
-             $(".upload-error").html(data);
+              Toast.fire({
+              icon: 'error',
+              title: data
+              });
             }
               
-         }
+         },
+       
+         error:function(jqXHR, exception){
+
+if(jqXHR.status === 0){
+Toast.fire({
+icon: 'warning',
+title: 'Please check your internet connection.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Please check your internet connection.');	
+
+}else if(jqXHR.status == 404){
+Toast.fire({
+icon: 'info',
+title: 'Request route not found.'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Request route not found.');
+}else if(jqXHR.status == 500){
+Toast.fire({
+icon: 'error',
+title: 'Internal Server Error [500]'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+}else if(jqXHR.status == 422){
+var errors = jqXHR.responseJSON;
+// $.each(json.responseJSON, function (key, value) {
+//     $('.'+key+'-error').html(value);
+// });
+Toast.fire({
+icon: 'error',
+title: errors.message
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
+
+}else if(exception === 'parsererror'){
+Toast.fire({
+icon: 'info',
+title: 'Requested JSON parse failed'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Requested JSON parse failed');
+
+}else if(exception === 'timeout'){
+Toast.fire({
+icon: 'info',
+title: 'Request time out'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Time out error');
+
+}else if(exception === 'abort'){
+Toast.fire({
+icon: 'info',
+title: 'Ajax request aborted'
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html('Ajax request aborted');
+
+}
+
+}         
+
          });
   }
 
@@ -551,7 +708,7 @@ var formdata = new FormData(this);//create an instance for the form input fields
   
   @include('inc.header2')
 
-  @include('inc.dashboard-side-bar2')
+  @include('inc.business-sidebar')
 
 <!-- Content Wrapper. Contains page content -->
  <!-- Content Wrapper. Contains page content -->
@@ -559,8 +716,8 @@ var formdata = new FormData(this);//create an instance for the form input fields
   <!-- Content Header (Page header) -->
   <section class="content-header">
     <h1>
-      Admin
-      <small>Create boat service</small>
+      Business Account
+      <small>Boat owner</small>
     </h1>
     
   </section>
@@ -592,56 +749,10 @@ var formdata = new FormData(this);//create an instance for the form input fields
       <!-- Left col -->
       <section class="col-lg-7 connectedSortable" id="blog-body">
        
-     @if(Auth::user()->user_type == "admin")
-        <div class="card card-info">
-          <div class="card-header">
-            
-            <h3 class="card-title"><i class="fa fa-ship"></i> Create Boat Categories</h3>
-            <!-- tools box -->
-            <div class="float-right card-tools">
-              <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                <i class="fas fa-minus"></i>
-              </button>
-              <button type="button" class="btn btn-tool" data-card-widget="remove">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            <!-- /. tools -->
-          </div>
-          <div class="card-body">
-            <form id="boat_category_form" action="{{ action('App\Http\Controllers\BoatController@create_categories') }}" method="post" enctype="multipart/form-data">
-              
-              
-              <div class="form-group">
-                  <span style="color: red; display: none" class="boat-category-error">(*Required)</span>
-                <input type="text" class="form-control" id="boat_category" name="boat_category" onfocus="elementFocus(this.id, 'boat-category-error')" placeholder="Enter Boat Type">
-              </div>
-             
-              
-              <div class="card-footer clearfix">
-                <button type="submit" class="pull-right btn btn-default" >Create
-                  <i class="fa fa-arrow-circle-right"></i></button>
-              </div>
-             
-            </form>
-          </div>
 
-          <div class="form-group">
-            <fieldset class="resort-features">
-              <legend>Categories</legend>
-              @if(count($categories) > 0)
-              @foreach ($categories as $category)
-      <label>{{$category->category}}<a href="#" class="fas fa-trash" onclick="deleteCategory('{{$category->id}}','{{$category->category}}')" title="Delete {{$category->category}}"></a></label>       
-              @endforeach
-              @endif
-              
-              
-            </fieldset>
-           </div>
-          
-        </div>
+        
 
-        @endif
+        
 
           <div class="card card-info">
               <div class="card-header">
@@ -662,9 +773,10 @@ var formdata = new FormData(this);//create an instance for the form input fields
               </div>
               <div class="card-body">
                 <form id="new-boat-form" action="{{ action('App\Http\Controllers\BoatController@create_new_boat') }}" method="post" enctype="multipart/form-data">
-                 <input type="hidden" id="uid" name="uid" value="{{Auth::user()->id}}" />
                  
-
+                 
+                  <div class="row">
+                    <div class="col-sm-6">
                  <div class="form-group">
                   <label>Select Category:</label>
                       <span style="color: red;" class="category-error">*</span>
@@ -674,17 +786,43 @@ var formdata = new FormData(this);//create an instance for the form input fields
                       <option value="{{$category->category}}">{{$category->category}}</option>
                       @endforeach
                     </select>
-                     
                   </div>
-                 
-                 
-                 
+                    </div>
 
+                    <div class="col-sm-6">
+                      <div class="form-group">
+                       <label>Registration:</label>
+                           <span style="color: red;" class="registration-model-error">*</span>
+                         <input type="text" class="form-control" id="registration" name="registration" onfocus="elementFocus(this.id, 'boat-model-error')" placeholder="Enter Registration Number">
+                       </div>
+                         </div>
+
+                  </div>
+
+
+                 
+                 
+                 
+                  <div class="row">
+                    <div class="col-sm-6">
                  <div class="form-group">
                   <label>Model:</label>
                       <span style="color: red;" class="boat-model-error">*</span>
                     <input type="text" class="form-control" id="model" name="model" onfocus="elementFocus(this.id, 'boat-model-error')" placeholder="Enter Boat Model">
                   </div>
+                    </div>
+                
+                    <div class="col-sm-6">
+                      <div class="form-group">
+                       <label>Capacity:</label>
+                           <span style="color: red;" class="capacity-model-error">*</span>
+                         <input type="number" class="form-control" id="capacity" name="capacity" placeholder="Enter passenger Seat capacity">
+                       </div>
+                         </div>
+
+                  </div>
+
+
 
                   <div class="row">
                     <div class="col-sm-6">
@@ -692,10 +830,7 @@ var formdata = new FormData(this);//create an instance for the form input fields
                       <div class="form-group">
                         <label>Currency:</label>
                         <select type='hidden' id='curr' name='curr' class="form-control">
-                          <option value="NGN">NGN - ₦</option>
-                          <option value="USD">USD - $</option>
-                          <option value="EUR">EUR - €</option>
-                          <option value="GBP">GBP - £</option>
+                          <option value="{{$country->currency}}" selected>{{$country->currency}} - {{$country->currency_symbol}}</option>
                           
                         </select>
                         
@@ -810,16 +945,17 @@ var formdata = new FormData(this);//create an instance for the form input fields
                     </tr>
                   </thead>
                   <tbody>
-               @foreach ($boats as $boat)
-               @if (Auth::user()->role == 1 || Auth::user()->user_type == "admin" || $boat->created_by == Auth::user()->id)
+              @if (count($business) > 0)
+               @foreach ($business as $boat)
+              
                    
                <tr class="item" >
                 <td width='500'>
                 <div class="product-img">
-                  <img src="{{$boat->img_1}}" alt="{{$boat->title}}">
+                  <img src="{{$boat->img_1}}" alt="{{$boat->model}}">
                 </div>
                 <div class="product-info">
-                  <a href="{{ url('boats/boat/'.$boat->id) }}" class="product-title">{{$boat->title}}
+                  <a href="{{ url('boats/boat/'.$boat->id) }}" class="product-title">{{$boat->model}}
                     
                     
                     <span class="badge badge-warning float-right">
@@ -838,9 +974,9 @@ var formdata = new FormData(this);//create an instance for the form input fields
                 </div>
               </td>
             </tr>
-              @endif
+              
                @endforeach
-                  
+               @endif
 
               </tbody>
               <tfoot class="card-footer text-center">
@@ -930,6 +1066,11 @@ $.widget.bridge('uibutton', $.ui.button)
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.html5.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.print.min.js')}}"></script>
 <script src="{{asset('plugins_2/datatables-buttons/js/buttons.colVis.min.js')}}"></script>
+
+ <!-- SweetAlert2 -->
+ <script src="{{ asset('plugins_2/sweetalert2/sweetalert2.min.js')}}"></script>
+ <!-- Toastr -->
+ <script src="{{ asset('plugins_2/toastr/toastr.min.js')}}"></script>
 
 <!-- AdminLTE App -->
 <script src="{{asset('dist_2/js/adminlte.min.js')}}"></script>

@@ -15,8 +15,12 @@ class CreateResortFeaturesTable extends Migration
     {
         Schema::create('resort_features', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');
+           // $table->integer('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');
             $table->longtext('features')->nullable();
+            $table->string('curr')->nullable();
+            $table->integer('price')->nullable();
+            $table->integer('duration')->default(1);
+            $table->foreignId('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

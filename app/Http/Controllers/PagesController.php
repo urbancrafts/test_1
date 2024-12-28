@@ -22,8 +22,6 @@ use App\Models\StoreCategory;
 use App\Models\Reservations;
 use App\Models\Debt;
 use App\Models\ServiceBooking;
-use App\Models\Visited;
-use App\Models\SiteActivity;
 use App\Models\transaction;
 use App\Models\review;
 use App\Models\Messages;
@@ -39,10 +37,13 @@ use App\Models\Boat;
 use App\Models\BoatCategory;
 use App\Models\PageBanner;
 use App\Models\ShoppingCart;
+use App\Models\Visited;
+use App\Models\SiteActivity;
 use App\Http\Controllers\API\BaseController as BaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+
 class PagesController extends BaseController
 {
 
@@ -50,68 +51,62 @@ class PagesController extends BaseController
 
     public function __construct(){
          //Buffering the output
+
+    ob_start();  
       
-    $this->settings = Settings::where('status', true)->get();
-
-if(count($this->settings) > 0){
-   ob_start();  
+      //Getting configuration details 
+      system('ipconfig /all');  
+      
+      //Storing output in a variable 
+      $configdata=ob_get_contents();  
+      
+      // Clear the buffer  
+      ob_clean();  
+      
+      //Extract only the physical address or Mac address from the output
+      $mac = "Physical";  
+      $pmac = strpos($configdata, $mac);
+      
+      // Get Physical Address  
+      $macaddr=substr($configdata,($pmac+36),17);  
    
-   //Getting configuration details 
-   system('ipconfig /all');  
+           $guest_ip = preg_replace('#[^0-9.:]#', '', getenv('REMOTE_ADDR'));
+           
+           $browser = $_SERVER['HTTP_USER_AGENT'];
+           
+           $url = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
    
-   //Storing output in a variable 
-   $configdata=ob_get_contents();  
+           $visited = Visited::where('ip', $guest_ip)->get();
    
-   // Clear the buffer  
-   ob_clean();  
-   
-   //Extract only the physical address or Mac address from the output
-   $mac = "Physical";  
-   $pmac = strpos($configdata, $mac);
-   
-   // Get Physical Address  
-   $macaddr=substr($configdata,($pmac+36),17);  
-
-        $guest_ip = preg_replace('#[^0-9.:]#', '', getenv('REMOTE_ADDR'));
-        
-        $browser = $_SERVER['HTTP_USER_AGENT'];
-        
-        $url = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-
-        $visited = Visited::where('ip', $guest_ip)->get();
-
-        if(count($visited) < 1){
-            $insert_visit = new Visited;
-            $insert_visit->ip = $guest_ip;
-            $insert_visit->mac_address = $macaddr;
-            $insert_visit->user_agent = $browser;
-            $insert_visit->save();
-        }else{
-            $site_activity = SiteActivity::where(function($p) use($guest_ip, $macaddr, $browser, $url){
-                $p->where('ip', '=', $guest_ip);
-                $p->where('mac_address', '=', $macaddr);
-                $p->where('user_agent', '=', $browser);
-                $p->where('url', '=', $url);
-           })->get(); 
-            if(count($site_activity) < 1){
-                $activity = new SiteActivity;
-                if(Auth::user()){
-                $activity->user = Auth::user()->name;
-                }
-                $activity->ip = $guest_ip;
-                $activity->mac_address = $macaddr;
-                $activity->user_agent = $browser;
-                $activity->url = $url;
-                $activity->save();
-            }else{
-                $activity = SiteActivity::where('id', $site_activity[0]->id)->update(['mac_address' => $macaddr, 'user_agent' => $browser, 'url' => $url]);    
-            }
-        }
-    
-   }else{
-       exit();
-   }
-
+           if(count($visited) < 1){
+               $insert_visit = new Visited;
+               $insert_visit->ip = $guest_ip;
+               $insert_visit->mac_address = $macaddr;
+               $insert_visit->user_agent = $browser;
+               $insert_visit->save();
+           }else{
+               $site_activity = SiteActivity::where(function($p) use($guest_ip, $macaddr, $browser, $url){
+                   $p->where('ip', '=', $guest_ip);
+                   $p->where('mac_address', '=', $macaddr);
+                   $p->where('user_agent', '=', $browser);
+                   $p->where('url', '=', $url);
+              })->get(); 
+               if(count($site_activity) < 1){
+                   $activity = new SiteActivity;
+                   if(Auth::user()){
+                   $activity->user = Auth::user()->id;
+                   }
+                   $activity->ip = $guest_ip;
+                   $activity->mac_address = $macaddr;
+                   $activity->user_agent = $browser;
+                   $activity->url = $url;
+                   $activity->save();
+               }else{
+                   $activity = SiteActivity::where('id', $site_activity[0]->id)->update(['mac_address' => $macaddr, 'user_agent' => $browser, 'url' => $url]);    
+               }
+           }
+       
+      
     }
 
     /**
@@ -122,6 +117,7 @@ if(count($this->settings) > 0){
     public function index()
     {   //run 4 queries from database tables
         
+        $this->settings = Settings::where('status', 1)->get();
         
         $content = Content::all();
 
@@ -133,6 +129,7 @@ if(count($this->settings) > 0){
         $room = Rooms::orderBy('id', 'desc')->get();
     return view('pages.index', ['settings' => $this->settings, 'contents' => $content, 'services' => $services, 'resorts' => $resort, 'blogs' => $blog, 'rooms' => $room]);
     }
+    
 
     public function signup_members(){
         if(!Auth::user()){
@@ -188,7 +185,7 @@ if(count($this->settings) > 0){
 
         $resort = Shelter::where('id', $id)->get();
 
-        $rooms = Rooms::where('shelter_id', $id)->get();
+        $rooms = Rooms::where('resort_id', $id)->get();
         
 
         $features = ResortFeatures::where('resort_id', $id)->get();
@@ -200,13 +197,13 @@ if(count($this->settings) > 0){
              $p->where('type', '=', $type);
         })->get();
 
-        if(count($features) > 0){
-            $array_call = $features;
-            $array_list = json_decode($features[0]->features);
-         }else{
-             $array_call = array();
-             $array_list = array();
-         }
+        // if(count($features) > 0){
+        //     $array_call = $features;
+        //     $array_list = json_decode($features[0]->features);
+        //  }else{
+        //      $array_call = array();
+        //      $array_list = array();
+        //  }
 
     return view('pages.resort', ['settings' => $settings, 
                                  //'contents' => $content, 
@@ -214,8 +211,8 @@ if(count($this->settings) > 0){
                                  'resortImages' => json_decode($resort[0]->images),
                                  'rooms' => $rooms, 
                                  'reviews' => $reviews, 
-                                 'features' => $array_call,
-                                 'feature_list' => $array_list
+                                 'features' => $features
+                                //  'feature_list' => $array_list
                                   ]);
     }
 
@@ -683,248 +680,6 @@ public function create_resort(){
         }  
 }
 
-public function update_resort($id){
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $resorts = Shelter::where('id', $id)->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-        $features = ResortFeatures::where('resort_id', $id)->get();
-        $features2 = AdminResortFeatures::orderBy('id', 'desc')->get();
-            return view('home.update_resort', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'resorts2' => $resorts, 'features' => $features, 'admin_features' => $features2]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }  
-}
-
-
-public function edit_resort_img($id){
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-       
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $resorts = Shelter::where('id', $id)->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-
-                       
-    return view('home.edit_resort_img', ['settings' => $settings, 
-                                          'myselfs' => $myself, 
-                                          'resorts' => $resort, 
-                                          'resorts2' => $resorts,
-                                          'resortImg' => json_decode($resorts[0]->images)
-                                           ]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }  
-}
-
-public function edit_resort_features($id){
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $resorts = Shelter::where('id', $id)->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-        $features = ResortFeatures::where('resort_id', $id)->get();
-        $features2 = AdminResortFeatures::orderBy('id', 'desc')->get();
-       
-        //$array_call = array();
-        if(count($features) > 0){
-           $array_call = $features;
-           $array_list = json_decode($features[0]->features);
-        }else{
-            $array_call = array();
-            $array_list = array();
-        }
-
-        
-        
-        /********************************************************** 
-        $array = array('admin_features' => $features2,
-                       'resort_features' => ''//$array_call
-                         );
-        *********************************************************/
-return view('home.edit_resort_features', ['settings' => $settings, 
-                                          'myselfs' => $myself, 
-                                          'resorts' => $resort, 
-                                          'resorts2' => $resorts, 
-                                          'admin_features' => $features2,
-                                          'features' => $array_call,
-                                          'feature_list' => $array_list
-                                        ]);
-
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }  
-}
-
-public function create_room($id){
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $rooms = Rooms::where('shelter_id', $id)->orderBy('id', 'desc')->get(); 
-        $resorts = Shelter::where('id', $id)->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-            return view('home.create_room', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'resorts2' => $resorts, 'rooms' => $rooms]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }  
-
-
-}
-
-public function update_room_page($resort, $id = NULL){
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::where('id', $resort)->get(); 
-        $single = Rooms::where('id', $id)->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-            return view('home.update_room', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'rooms' => $single]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }  
-  
-}
-
-public function edit_room_img($resort, $id = NULL){
-
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::where('id', $resort)->get(); 
-        $single = Rooms::where('id', $id)->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-
-        return view('home.edit_room_img', ['settings' => $settings, 
-                                           'myselfs' => $myself, 
-                                           'resorts' => $resort, 
-                                           'rooms' => $single,
-                                           'roomImg' => json_decode($single[0]->images)
-                                             ]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }  
-  
-
-}
 
 
 /****************************************************************
@@ -1082,41 +837,9 @@ public function edit_delivery_settings($id){
 }
 
 
-/****************************************************************
- * **********Content manager view rendering methods**************
- * *************************************************************/
 
-public function index_slider(){
-    if(Auth::user()){
-        if( Auth::user()->user_type == "admin" || Auth::user()->role == 1){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $slide = SlideFeatures::orderBy('updated_at', 'desc')->get();
-        $myself = User::where('id', Auth::user()->id)->get();
-            return view('home.index_slider', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'slides' => $slide]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
 
-        }  
-}
+
 
 
 
@@ -1124,342 +847,17 @@ public function index_slider(){
  **************Boat service view rendering****************
  ********************************************************/
 
-public function boat_services(){
-    if(Auth::user()){
-    if( Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "boat_owner" || Auth::user()->privilege == "boat_owner" || Auth::user()->privilege_2 == "boat_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-
-        $boat_category = BoatCategory::orderBy('id', 'desc')->get();
-        $boat = Boat::orderBy('id', 'desc')->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-            return view('home.create_boat_services', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'boats' => $boat, 'categories' => $boat_category]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }   
-}
-
-public function edit_boat_services($id){
-    if(Auth::user()){
-        if( Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "boat_owner" || Auth::user()->privilege == "boat_owner" || Auth::user()->privilege_2 == "boat_owner"){
-            $s_id = 1;
-          $status = 1;
-        $settings = Settings::where(function($p) use($s_id, $status){
-            $p->where('id', '=', $s_id);
-            $p->where('status', '=', $status);
-       })->get();
-    
-            //$boat_category = BoatCategory::orderBy('id', 'desc')->get();
-            $boat = Boat::where('id', $id)->get();
-            $resort = Shelter::orderBy('id', 'desc')->get(); 
-            $myself = User::where('id', Auth::user()->id)->get();
-                return view('home.edit_boat', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'boats' => $boat]);
-    }else{
-        $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-    }
-            }else{
-                $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-    
-            }   
-}
-
-
-public function edit_boat_img($id){
-    if(Auth::user()){
-        if( Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "boat_owner" || Auth::user()->privilege == "boat_owner" || Auth::user()->privilege_2 == "boat_owner"){
-            $s_id = 1;
-          $status = 1;
-        $settings = Settings::where(function($p) use($s_id, $status){
-            $p->where('id', '=', $s_id);
-            $p->where('status', '=', $status);
-       })->get();
-    
-            //$boat_category = BoatCategory::orderBy('id', 'desc')->get();
-            $boat = Boat::where('id', $id)->get();
-            $resort = Shelter::orderBy('id', 'desc')->get(); 
-            $myself = User::where('id', Auth::user()->id)->get();
-                return view('home.edit_boat_img', ['settings' => $settings, 
-                                                  'myselfs' => $myself, 
-                                                  'resorts' => $resort, 
-                                                  'boats' => $boat,
-                                                  'boatimages' => json_decode($boat[0]->images)]);
-    }else{
-        $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-    }
-            }else{
-                $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-    
-            }   
-}
-
-
-public function boat_bookings($id){
-    if(Auth::user()){
-        if( Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "boat_owner" || Auth::user()->privilege == "boat_owner" || Auth::user()->privilege_2 == "boat_owner"){
-            $s_id = 1;
-          $status = 1;
-        $settings = Settings::where(function($p) use($s_id, $status){
-            $p->where('id', '=', $s_id);
-            $p->where('status', '=', $status);
-       })->get();
-    
-            //$boat_category = BoatCategory::orderBy('id', 'desc')->get();
-            $boat = Boat::where('id', $id)->get();
-            $resort = Shelter::orderBy('id', 'desc')->get(); 
-            $myself = User::where('id', Auth::user()->id)->get();
-                return view('home.boat_bookings', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'boats' => $boat]);
-    }else{
-        $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-    }
-            }else{
-                $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-    
-            }   
-}
-
 
 /******************************************************************
  ********************Services view rendering***********************
  *****************************************************************/
 
 
-public function create_services(){
-    if(Auth::user()){
-    if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $service_category = ServiceCategory::orderBy('id', 'desc')->get();
-        $services = Services::orderBy('id', 'desc')->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-            return view('home.create_services', ['settings' => $settings, 'myselfs' => $myself, 'services' => $services, 'serviceCategories' => $service_category, 'resorts' => $resort]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }   
-}
-
-
-public function edit_service_img($id){
-    if(Auth::user()){
-    if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        //$service_category = ServiceCategory::orderBy('id', 'desc')->get();
-        $services = Services::where('id', $id)->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-            return view('home.edit_service_img', ['settings' => $settings, 
-                                                 'myselfs' => $myself, 
-                                                 'services' => $services, 
-                                                 'serviceImages' => json_decode($services[0]->images), 
-                                                 'resorts' => $resort]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }   
-}
 
 
 
-public function edit_service($id){
-    if(Auth::user()){
-        if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
-            $s_id = 1;
-          $status = 1;
-        $settings = Settings::where(function($p) use($s_id, $status){
-            $p->where('id', '=', $s_id);
-            $p->where('status', '=', $status);
-       })->get();
-            //$service_category = ServiceCategory::orderBy('id', 'desc')->get();
-            $services = Services::where('id', $id)->get();
-            $resort = Shelter::orderBy('id', 'desc')->get(); 
-            $myself = User::where('id', Auth::user()->id)->get();
-                return view('home.edit_service', ['settings' => $settings, 
-                                                     'myselfs' => $myself, 
-                                                     'services' => $services, 
-                                                     'serviceImages' => json_decode($services[0]->images), 
-                                                     'resorts' => $resort]);
-    }else{
-        $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-    }
-            }else{
-                $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-    
-            }   
-}
 
 
-
-public function service_admin_booking_entry($id){
-    if(Auth::user()){
-        if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
-            $s_id = 1;
-          $status = 1;
-        $settings = Settings::where(function($p) use($s_id, $status){
-            $p->where('id', '=', $s_id);
-            $p->where('status', '=', $status);
-       })->get();
-            //$service_category = ServiceCategory::orderBy('id', 'desc')->get();
-            $services = Services::where('id', $id)->get();
-            $resort = Shelter::orderBy('id', 'desc')->get(); 
-            $myself = User::where('id', Auth::user()->id)->get();
-                return view('home.service_bookings', ['settings' => $settings, 
-                                                     'myselfs' => $myself, 
-                                                     'services' => $services, 
-                                                     'serviceImages' => json_decode($services[0]->images), 
-                                                     'resorts' => $resort]);
-    }else{
-        $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]);    
-    }
-            }else{
-                $settings = Settings::where('id', 1)->get();
-                $error = array("code" => "403",
-                               "title" => "Forbidden!",
-                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                               "link" => url('/') );
-                               return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-    
-            }   
-}
-
-
-
-public function edit_contents(){
-
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $contents = Content::all(); 
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-        if(isset($_GET['cnt_name'])){
-            $contents2 = Content::where('name', $_GET['cnt_name'])->get();
-            return view('home.content', ['settings' => $settings, 'myselfs' => $myself, 'contents' => $contents, 'contents2' => $contents2, 'resorts' => $resort]);
-        }
-            return view('home.content', ['settings' => $settings, 'myselfs' => $myself, 'contents' => $contents, 'resorts' => $resort]);
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-        }
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }   
-
-}
 
 public function users(){
 
@@ -1512,30 +910,7 @@ public function user_profile($id){
         }     
 }
 
-public function settings(){
 
-    if(Auth::user() && Auth::user()->user_type == "admin" && Auth::user()->role == 1){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $users = User::orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-            return view('home.info', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'users' => $users]);
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }   
-
-}
 
 public function events(){
     if(Auth::user() && Auth::user()->user_type == "admin" && Auth::user()->role == 1){
@@ -1879,82 +1254,7 @@ public function print_booking($id){
 }
 
 //load single resort of the resort_owner priviledge
-public function resort_owner_resort_booking_page($id){
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        
-        
-        $resort = Shelter::where('id', $id)->get(); 
-        $users = User::where('user_type', 'member')->orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-        $reservation = Reservations::where('shelter_id', $resort[0]->id)->orderBy('id', 'desc')->get();
-        
-            return view('home.resort_booking', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'users' => $users, 'reservations' => $reservation]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);   
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
 
-        }   
- 
-}
-
-public function resort_owner_room_booking_page($resort, $id = NULL){
-
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->user_type == "resort_owner"){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        
-        
-        $resorts = Shelter::where('id', $resort)->get(); 
-        $users = User::where('user_type', 'member')->orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-        $rooms = Rooms::where('id', $id)->get();
-        $reservation = Reservations::where('room_id', $rooms[0]->id)->orderBy('id', 'desc')->get();
-        
-            return view('home.room_booking', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resorts, 'rooms' => $rooms, 'users' => $users, 'reservations' => $reservation]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);   
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
-
-        }   
- 
-
-}
 
 
 public function book_service($id){
@@ -2615,40 +1915,7 @@ public function notification_all(){
 
 
 
-public function news_letter(){
-    if(Auth::user()){
-        if(Auth::user()->user_type == "admin" || Auth::user()->role == 1){
-        $s_id = 1;
-      $status = 1;
-    $settings = Settings::where(function($p) use($s_id, $status){
-        $p->where('id', '=', $s_id);
-        $p->where('status', '=', $status);
-   })->get();
-        $resort = Shelter::orderBy('id', 'desc')->get(); 
-        $users = User::where('user_type', 'member')->orderBy('id', 'desc')->get(); 
-        $myself = User::where('id', Auth::user()->id)->get();
-        
-        $news_letters = NewsLetters::orderBy('id', 'desc')->get(); 
-       
-            return view('home.news-letter', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'users' => $users, 'news_letters' => $news_letters]);
-}else{
-    $settings = Settings::where('id', 1)->get();
-    $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $settings, 'errors' => $error]);  
-}
-        }else{
-            $settings = Settings::where('id', 1)->get();
-            $error = array("code" => "403",
-                           "title" => "Forbidden!",
-                           "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
-                           "link" => url('/') );
-                           return view('home.error', ['settings' => $settings, 'errors' => $error]); 
 
-        }       
-}
 
 
 public function admin_gallery(){

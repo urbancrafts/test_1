@@ -12,6 +12,7 @@ class Boat extends Model
     protected $fillable = [ 
         'id',  
         'category',
+        'registration',
         'model',
         'passenger_capacity',
         'about',

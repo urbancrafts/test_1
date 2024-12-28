@@ -15,7 +15,7 @@
   <div class="header-left d-flex align-items-center justify-content-between">
   <div class="site-branding">
     
-    <a href="{{ url('/') }}" class="custom-logo-link" rel="home"><img src="{{ asset('storage/img/site_logo/'.$settings[0]->logo) }}" alt="Logo" /></a>
+    <a href="{{ url('/') }}" class="custom-logo-link" rel="home"><img src="{{ $settings[0]->logo }}" alt="Logo" /></a>
     
  </div>
  
@@ -71,10 +71,12 @@
   <div class="booking-action-wrap">
   <div class="inner">
     @auth
-    @if (Auth::user()->user_type == "admin" && Auth::user()->role == 1)
-    <a href="{{ url('/admin_dashboard') }}/{{ Auth::user()->id }}" class="appao-btn mg-t button alt button-booking "><i class="fa fa-dashboard"></i> Dashbaord</a>   
-    @else
-    <a href="{{ url('/member_dashboard') }}/{{ Auth::user()->id }}" class="appao-btn mg-t button alt button-booking "><i class="fa fa-dashboard"></i> Dashbaord</a>   
+    @if (Auth::user()->user_type == "Admin")
+    <a href="{{ url('auth/admin/dashboard') }}" class="appao-btn mg-t button alt button-booking "><i class="fa fa-dashboard"></i> Dashbaord</a>   
+    @elseif (Auth::user()->user_type == "Business")
+    <a href="{{ url('auth/business/dashboard') }}" class="appao-btn mg-t button alt button-booking "><i class="fa fa-dashboard"></i> Dashbaord</a>   
+    @elseif (Auth::user()->user_type == "Customer")
+    <a href="{{ url('auth/customer/dashboard') }}" class="appao-btn mg-t button alt button-booking "><i class="fa fa-dashboard"></i> Dashbaord</a>   
     @endif
      
             @else

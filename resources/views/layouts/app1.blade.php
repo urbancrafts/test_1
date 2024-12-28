@@ -17,6 +17,9 @@
 
 
 <style type="text/css">
+
+
+
 img.wp-smiley,
 img.emoji {
 	display: inline !important;
@@ -98,6 +101,13 @@ a.menu-mobile-nav-button{
 </style>
 
 <style>
+
+.custom-toast {
+  font-size: 22px; /* Change the font size as per your preference */
+  background-color: #333; /* Change the background color */
+  color: #fff; /* Change the text color */
+  /* Add any other custom styles you want to apply */
+}
 
   .modal {
     display: none; /* Hidden by default */
@@ -209,7 +219,7 @@ a.menu-mobile-nav-button{
 
 
 
-<link data-minify="1" rel='stylesheet' id='elementor-post-569-css' href='{{ asset('wp-content/cache/min/1/foxuries/wp-content/uploads/elementor/css/post-569-7a6b7602fb2396b40b024c43352a7e8e.css') }}' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='elementor-post-569-css' href='{{ asset('content/cache/min/1/foxuries/wp-content/uploads/elementor/css/post-569-7a6b7602fb2396b40b024c43352a7e8e.css') }}' type='text/css' media='all' />
 <link rel="stylesheet" href="{{ asset('modal/modal/css/bootstrap.min.css') }}">
 <link rel="stylesheet" href="{{ asset('modal/modal/css/modals.css') }}">
 <link rel="stylesheet" href="{{ asset('modal/modal/css/normalize.css') }}">
@@ -219,28 +229,28 @@ a.menu-mobile-nav-button{
      
 		
 <script type="text/javascript">
-  var hotel_settings = {
-    ajax            : 'https://demo.inspithemes.com/foxuries/wp-admin/admin-ajax.php',
-    settings        : {"review_rating_required":"1"},
-    upload_base_url : 'https://demothemedh.b-cdn.net/foxuries/wp-content/uploads',
-    meta_key        : {
-      prefix: '_hb_'
-    },
-    nonce           : '1ce51b652b',
-    timezone        : '1613423006',
-    min_booking_date: 1			}
+  // var hotel_settings = {
+  //   ajax            : 'https://demo.inspithemes.com/foxuries/wp-admin/admin-ajax.php',
+  //   settings        : {"review_rating_required":"1"},
+  //   upload_base_url : 'https://demothemedh.b-cdn.net/foxuries/wp-content/uploads',
+  //   meta_key        : {
+  //     prefix: '_hb_'
+  //   },
+  //   nonce           : '1ce51b652b',
+  //   timezone        : '1613423006',
+  //   min_booking_date: 1			}
 </script>
 <script type="text/javascript">
-  var hotel_settings = {
-    ajax            : 'https://demo.inspithemes.com/foxuries/wp-admin/admin-ajax.php',
-    settings        : {"review_rating_required":"1"},
-    upload_base_url : 'https://demothemedh.b-cdn.net/foxuries/wp-content/uploads',
-    meta_key        : {
-      prefix: '_hb_'
-    },
-    nonce           : '1ce51b652b',
-    timezone        : '1613423006',
-    min_booking_date: 1			}
+  // var hotel_settings = {
+  //   ajax            : 'https://demo.inspithemes.com/foxuries/wp-admin/admin-ajax.php',
+  //   settings        : {"review_rating_required":"1"},
+  //   upload_base_url : 'https://demothemedh.b-cdn.net/foxuries/wp-content/uploads',
+  //   meta_key        : {
+  //     prefix: '_hb_'
+  //   },
+  //   nonce           : '1ce51b652b',
+  //   timezone        : '1613423006',
+  //   min_booking_date: 1			}
 </script>
 
 
@@ -262,7 +272,7 @@ a.menu-mobile-nav-button{
 </style>
 
 <!-- DayPilot library -->
-<script src="{{ asset('dashboard_calendar/js/daypilot/daypilot-all.min.js')}}"></script>
+
 
 <link type="text/css" rel="stylesheet" href="{{ asset('dashboard_calendar/icons/style.css')}}" />
 
@@ -899,6 +909,16 @@ if(jQuery.trim(jQuery('#news-email').val()) == ""){
 });
 </script>
 
+<link rel="stylesheet" href="{{ asset('plugins_2/fontawesome-free/css/all.min.css') }}">
+<!-- SweetAlert2 -->
+
+<link rel="stylesheet" href="{{ asset('plugins_2/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css')}}">
+<!-- Toastr -->
+<link rel="stylesheet" href="{{ asset('plugins_2/toastr/toastr.min.css')}}">
+
+<!-- Theme style -->
+
+
 <style type="text/css">
 .recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}
 </style>
@@ -961,5 +981,24 @@ function setREVStartSize(e){
 		
   @yield('content')
   
+
+  <!-- jQuery -->
+<script src="{{asset('plugins_2/jquery/jquery.min.js')}}"></script>
+<!-- jQuery UI 1.11.4 -->
+<script src="{{asset('plugins_2/jquery-ui/jquery-ui.min.js')}}"></script>
+<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+
+<script>
+  $.widget.bridge('uibutton', $.ui.button)
+</script>
+<!-- Bootstrap 4 -->
+<script src="{{asset('plugins_2/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
+
+ <!-- SweetAlert2 -->
+ <script src="{{ asset('plugins_2/sweetalert2/sweetalert2.min.js')}}"></script>
+ <!-- Toastr -->
+ <script src="{{ asset('plugins_2/toastr/toastr.min.js')}}"></script>
+ <!-- AdminLTE App -->
+ 
 	</body>
 </html>

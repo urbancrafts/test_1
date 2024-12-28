@@ -25,10 +25,10 @@ class CreateBusinessDetailsTable extends Migration
             $table->string('city')->nullable();
             $table->text('address')->nullable();
             $table->string('zip_code')->nullable();
-            $table->string('business_category')->nullable();
+            $table->enum('business_category', ['Resort','Boat','Other Services'])->default('Resort');
             $table->string('registration_number')->nullable();
             $table->longtext('document_url')->nullable();
-            $table->string('logo_url')->nullable();
+            $table->longtext('logo_url')->nullable();
             //$table->string('banner_url')->nullable();
             $table->boolean('verified')->default(false);
             $table->boolean('subscribed')->default(false);

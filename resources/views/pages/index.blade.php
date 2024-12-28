@@ -177,7 +177,7 @@ jQuery("#location").on('keyup', function(e){
 		<div id="page" class="hfeed site">
 			@include('inc.header1')
 			
-		@include('pages.index-service-field')
+		@include('pages.index-slider-field')
         @include('pages.index-check-reservation')
 
 		<div class="elementor-element elementor-element-6c8828c elementor-section-stretched elementor-reverse-tablet elementor-reverse-mobile elementor-section-boxed elementor-section-height-default elementor-section-height-default elementor-section elementor-top-section" data-id="6c8828c" data-element_type="section" data-settings="{&quot;stretch_section&quot;:&quot;section-stretched&quot;,&quot;background_background&quot;:&quot;classic&quot;}">
@@ -189,7 +189,7 @@ jQuery("#location").on('keyup', function(e){
 			<div class="elementor-element elementor-element-dae716a animated-fast elementor-invisible elementor-widget elementor-widget-image" data-id="dae716a" data-element_type="widget" data-settings="{&quot;_animation&quot;:&quot;opal-move-right&quot;,&quot;_animation_tablet&quot;:&quot;none&quot;,&quot;_animation_mobile&quot;:&quot;none&quot;}" data-widget_type="image.default">
 			<div class="elementor-widget-container">
 			<div class="elementor-image">
-			<img width="290" height="620" src="{{ asset('img/index-img/h1_img.jpg') }}" class="attachment-full size-full" alt="" srcset="{{ asset('img/index-img/h1_img.jpg') }} 290w, {{ asset('img/index-img/h1_img.jpg') }} 140w" sizes="(max-width: 290px) 100vw, 290px" /> </div>
+			<img width="290" height="620" src="{{ asset('storage/img/content/h1_img.jpg') }}" class="attachment-full size-full" alt="" srcset="{{ asset('img/index-img/h1_img.jpg') }} 290w, {{ asset('img/index-img/h1_img.jpg') }} 140w" sizes="(max-width: 290px) 100vw, 290px" /> </div>
 			</div>
 			</div>
 			</div>
@@ -201,13 +201,13 @@ jQuery("#location").on('keyup', function(e){
 			<div class="elementor-element elementor-element-6bac523 animated-fast elementor-invisible elementor-widget elementor-widget-image" data-id="6bac523" data-element_type="widget" data-settings="{&quot;_animation&quot;:&quot;opal-move-left&quot;,&quot;_animation_tablet&quot;:&quot;none&quot;,&quot;_animation_mobile&quot;:&quot;none&quot;}" data-widget_type="image.default">
 			<div class="elementor-widget-container">
 			<div class="elementor-image">
-			<img width="290" height="290" src="{{ asset('img/index-img/h1_img1.jpg') }}" class="attachment-full size-full" alt="" srcset="{{ asset('img/index-img/h1_img1.jpg') }} 290w, {{ asset('img/index-img/h1_img1.jpg') }} 150w" sizes="(max-width: 290px) 100vw, 290px" /> </div>
+			<img width="290" height="290" src="{{ asset('storage/img/content/h2_img.jpg') }}" class="attachment-full size-full" alt="" srcset="{{ asset('img/index-img/h1_img1.jpg') }} 290w, {{ asset('img/index-img/h1_img1.jpg') }} 150w" sizes="(max-width: 290px) 100vw, 290px" /> </div>
 			</div>
 			</div>
 			<div class="elementor-element elementor-element-2893bd2 animated-fast elementor-invisible elementor-widget elementor-widget-image" data-id="2893bd2" data-element_type="widget" data-settings="{&quot;_animation&quot;:&quot;opal-move-left&quot;,&quot;_animation_delay&quot;:200,&quot;_animation_tablet&quot;:&quot;none&quot;,&quot;_animation_mobile&quot;:&quot;none&quot;}" data-widget_type="image.default">
 			<div class="elementor-widget-container">
 			<div class="elementor-image">
-			<img width="290" height="290" src="{{ asset('img/index-img/h1_img2.jpg') }}" class="attachment-full size-full" alt="" srcset="{{ asset('img/index-img/h1_img2.jpg') }} 290w, {{ asset('img/index-img/h1_img2.jpg') }} 150w" sizes="(max-width: 290px) 100vw, 290px" /> </div>
+			<img width="290" height="290" src="{{ asset('storage/img/content/h3_img.jpg') }}" class="attachment-full size-full" alt="" srcset="{{ asset('img/index-img/h1_img2.jpg') }} 290w, {{ asset('img/index-img/h1_img2.jpg') }} 150w" sizes="(max-width: 290px) 100vw, 290px" /> </div>
 			</div>
 			 </div>
 			</div>
@@ -234,11 +234,7 @@ jQuery("#location").on('keyup', function(e){
 			<div class="elementor-element elementor-element-a2a05bc animated-fast elementor-invisible elementor-widget elementor-widget-text-editor" data-id="a2a05bc" data-element_type="widget" data-settings="{&quot;_animation&quot;:&quot;opal-move-up&quot;,&quot;_animation_tablet&quot;:&quot;none&quot;,&quot;_animation_mobile&quot;:&quot;none&quot;}" data-widget_type="text-editor.default">
 			<div class="elementor-widget-container">
 			<div class="elementor-text-editor elementor-clearfix">
-				@foreach ($contents as $content)
-					@if ($content->name == "what_we_do")
-						{!!$content->value!!}
-					@endif
-				@endforeach
+				<p>Enjoy sweeping water views when you reserve a Hudson River View Suite. Spread out in an Executive or Luxury Suite with over 700 square feet of lavish living areas with integrated technology. Live the New York lifestyle in the Conrad Suite, featuring an office and separate living and dining areas.</p>
 			</div>
 			</div>
 			</div>
@@ -375,7 +371,7 @@ jQuery("#location").on('keyup', function(e){
 			<div class="elementor-text-editor elementor-clearfix">
 				
 					
-				{{ $settings[0]->memb_discount }}% Discount For
+				% Discount For
 				
 				Members</div>
 			</div>
@@ -620,13 +616,13 @@ jQuery("#location").on('keyup', function(e){
 			<div class="elementor-element elementor-element-60b75d7 animated-fast elementor-invisible elementor-widget elementor-widget-image" data-id="60b75d7" data-element_type="widget" data-settings="{&quot;_animation&quot;:&quot;opal-scale-up&quot;,&quot;_animation_tablet&quot;:&quot;none&quot;,&quot;_animation_mobile&quot;:&quot;none&quot;}" data-widget_type="image.default">
 			<div class="elementor-widget-container">
 			<div class="elementor-image">
-			<img width="260" height="135" src="{{asset('wp-content/uploads/2020/03/h1_text-hello.png')}}" class="attachment-full size-full" alt="" /> </div>
+			<img width="260" height="135" src="{{ asset('content/uploads/2020/03/h1_text-hello.png') }}" class="attachment-full size-full" alt="" /> </div>
 			</div>
 			</div>
 			<div class="elementor-element elementor-element-3618d85 elementor-widget__width-initial elementor-absolute elementor-widget-mobile__width-initial elementor-widget elementor-widget-image" data-id="3618d85" data-element_type="widget" data-settings="{&quot;_position&quot;:&quot;absolute&quot;}" data-widget_type="image.default">
 			<div class="elementor-widget-container">
 			<div class="elementor-image">
-			<img width="464" height="216" src="{{asset('wp-content/uploads/2020/03/h1_shape-people.png')}}" class="attachment-full size-full" alt="" srcset="{{asset('wp-content/uploads/2020/03/h1_shape-people.png')}} 464w, {{asset('wp-content/uploads/2020/03/h1_shape-people.png')}} 300w" sizes="(max-width: 464px) 100vw, 464px" /> </div>
+			<img width="464" height="216" src="{{ asset('content/uploads/2020/03/h1_shape-people.png') }}" class="attachment-full size-full" alt="" srcset="{{asset('content/uploads/2020/03/h1_shape-people.png')}} 464w, {{asset('content/uploads/2020/03/h1_shape-people.png')}} 300w" sizes="(max-width: 464px) 100vw, 464px" /> </div>
 			</div>
 			</div>
 			</div>
@@ -638,7 +634,7 @@ jQuery("#location").on('keyup', function(e){
 			<div class="elementor-element elementor-element-0097ba3 animated-fast elementor-invisible elementor-widget elementor-widget-image" data-id="0097ba3" data-element_type="widget" data-settings="{&quot;_animation&quot;:&quot;opal-scale-up&quot;,&quot;_animation_delay&quot;:200,&quot;_animation_tablet&quot;:&quot;none&quot;,&quot;_animation_mobile&quot;:&quot;none&quot;}" data-widget_type="image.default">
 			<div class="elementor-widget-container">
 			<div class="elementor-image">
-			<img width="280" height="156" src="{{asset('wp-content/uploads/2020/03/h1_text-summer.png')}}" class="attachment-full size-full" alt="" /> </div>
+			<img width="280" height="156" src="{{asset('content/uploads/2020/03/h1_text-summer.png')}}" class="attachment-full size-full" alt="" /> </div>
 			</div>
 			</div>
 			</div>
@@ -667,5 +663,5 @@ jQuery("#location").on('keyup', function(e){
 
 
 		@include('inc.footer1')
-		<script src="{{ asset('wp-content/cache/min/1/26ca0b884dacc351c317d05fa6222447.js') }}" data-minify="1" defer></script>
+		<script src="{{ asset('content/cache/min/1/26ca0b884dacc351c317d05fa6222447.js') }}" data-minify="1" defer></script>
 		@endsection

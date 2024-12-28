@@ -2,14 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
-use App\Models\Boat;
-use App\Models\BoatCategory;
+use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\API\BaseController as BaseController;
+use Illuminate\Http\Request;
+use App\Http\Controllers\DateTimeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Models\User;
+use App\Models\Settings;
+use App\Models\Boat;
+use App\Models\BoatCategory;
+use App\Models\BusinessDetail;
+use App\Models\Country;
+use App\Http\Controllers\DateManagerController;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\ Mail;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class BoatController extends BaseController
 {
@@ -18,44 +28,155 @@ class BoatController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+
+    protected $user;
+    protected $settings;
+    public function __construct()
     {
-        //
+        $this->middleware('business');
     }
 
-   public function create_categories(Request $request){
-    $input = $request->all();
     
-    $validator = Validator::make($input, [
-        'boat_category' => 'required',
+    public function index(){
+       
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
         
-          
-    ]);
+        $businesses = $this->user->business_account()->orderBy('created_at', 'desc')->get();
 
-    if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
+        $business_single = $this->user->business_account()->where('business_category', 'Boat')->first();
+        $boat_category = BoatCategory::orderBy('id', 'desc')->get();
+        $country = Country::where('name', $business_single->country)->first();
+
+        return view('home.business.boats.create_boat_services', ['settings' => $this->settings, 
+                                                    'myselfs' => $myselfs, 
+                                                    'businesses' => $businesses,
+                                                    'business' => $business_single->boats()->get(),
+                                                    'categories' => $boat_category,
+                                                    'country' => $country
+                                                    ]);
+    
     }
-
-    $check = BoatCategory::where('category', $request->input('boat_category'))->get();
-
-    if(count($check) > 0){
-        return $this->showErrorMsg($check[0]->category.' is already added to the list', $check);//return json response         
-    }else{
-     $insert = new BoatCategory;
-     $insert->category = $request->input('boat_category');
-     $insert->save();
-     return $this->sendResponse($insert, $insert->category.' added succesfully.');
+    
+    public function edit_boat_services($id){
+        if(Auth::user()){
+            if( Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "boat_owner" || Auth::user()->privilege == "boat_owner" || Auth::user()->privilege_2 == "boat_owner"){
+                $s_id = 1;
+              $status = 1;
+            $settings = Settings::where(function($p) use($s_id, $status){
+                $p->where('id', '=', $s_id);
+                $p->where('status', '=', $status);
+           })->get();
+        
+                //$boat_category = BoatCategory::orderBy('id', 'desc')->get();
+                $boat = Boat::where('id', $id)->get();
+                $resort = Shelter::orderBy('id', 'desc')->get(); 
+                $myself = User::where('id', Auth::user()->id)->get();
+                    return view('home.edit_boat', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'boats' => $boat]);
+        }else{
+            $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
+        }
+                }else{
+                    $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]); 
+        
+                }   
     }
+    
+    
+    public function edit_boat_img($id){
+        
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+        
+        $businesses = $this->user->business_account()->orderBy('created_at', 'desc')->get();
 
-   }
+        $business_single = $this->user->business_account()->where('business_category', 'Boat')->first();
+        
+
+        
+                //$boat_category = BoatCategory::orderBy('id', 'desc')->get();
+                $boat = $business_single->boats()->where('id', $id)->get();
+               
+                
+                    return view('home.business.boats.edit_boat_img', ['settings' => $this->settings, 
+                                                      'myselfs' => $myselfs, 
+                                                      'businesses' => $businesses,
+                                                      'boats' => $boat,
+                                                      'boatimages' => json_decode($boat[0]->images)]);
+        
+    }
+    
+    
+    public function boat_bookings($id){
+        if(Auth::user()){
+            if( Auth::user()->user_type == "admin" || Auth::user()->role == 1 || Auth::user()->user_type == "boat_owner" || Auth::user()->privilege == "boat_owner" || Auth::user()->privilege_2 == "boat_owner"){
+                $s_id = 1;
+              $status = 1;
+            $settings = Settings::where(function($p) use($s_id, $status){
+                $p->where('id', '=', $s_id);
+                $p->where('status', '=', $status);
+           })->get();
+        
+                //$boat_category = BoatCategory::orderBy('id', 'desc')->get();
+                $boat = Boat::where('id', $id)->get();
+                $resort = Shelter::orderBy('id', 'desc')->get(); 
+                $myself = User::where('id', Auth::user()->id)->get();
+                    return view('home.boat_bookings', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'boats' => $boat]);
+        }else{
+            $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
+        }
+                }else{
+                    $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]); 
+        
+                }   
+    }
+    
+    
+
+
+    
+
+   
 
    public function create_new_boat(Request $request){
     $input = $request->all();
     
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+        
+        $businesses = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+
+        $business_single = $this->user->business_account()->where('business_category', 'Boat')->first();
+        // $boat_category = BoatCategory::orderBy('id', 'desc')->get();
+
     $validator = Validator::make($input, [
-        'uid' => 'required',
         'category' => 'required',
+        'registration' => 'required',
         'model' => 'required',
+        'capacity' => 'required',
         'curr' => 'required',
         'price' => 'required',
         'location' => 'required',
@@ -70,21 +191,34 @@ class BoatController extends BaseController
         return $this->sendError('Validation Error.', $validator->errors());       
     }
     
-    $insert = new Boat;
-    $insert->category = $request->input('category');
-    $insert->title = $request->input('model');
-    $insert->about = $request->input('desc');
-    $insert->curr = $request->input('curr');
-    $insert->price = $request->input('price');
-    $insert->location = $request->input('location');
-    $insert->address = $request->input('address');
-    $insert->youtube = $request->input('youtube');
-    $insert->created_by = $request->input('uid');
-    $insert->save();
+    $check_boat = $business_single->boats()->where('registration', $request->registration)->get();
 
-    Storage::makeDirectory('public/img/boat/'.$insert->id, 0775);
+    if(count($check_boat) > 0){
+        return response_data(false, 422, "You've already created a boat data with this registration number(".$request->registration.").", false, false, false);  
+    }else{
+    $create_boat = $business_single->boats()->create([
+        'category' => $request->category,
+        'registration' => $request->registration,
+        'model' => $request->model,
+        'passenger_capacity' => $request->capacity,
+        'about' => $request->desc,
+        'curr' => $request->curr,
+        'price' => $request->price,
+        'map_location' => $request->location,
+        'address' => $request->address,
+        'youtube' => $request->youtube
+    ]);
+
     
-    return $this->sendResponse($insert, ' Boat added succesfully.');
+
+    if($create_boat){
+        
+        return response_data(true, 200, $create_boat->model.' boat data created successfully.', ['values' => $create_boat], false, false);
+    }else{
+        return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+    }
+
+    }
    }
 
 

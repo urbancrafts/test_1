@@ -34,8 +34,8 @@ class CreateReservationsTable extends Migration
             $table->integer('paid')->nullable();
             $table->boolean('approved')->default(false);
             $table->string('status')->nullable();
-            $table->boolean('vendor_confired_booking')->default(false);
-            $table->boolean('customer_confired_checkin')->default(false);
+            $table->boolean('vendor_confirmed_booking')->default(false);
+            $table->boolean('customer_confirmed_checkin')->default(false);
             // $table->string('created_by')->default('self')->nullable();
             $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade')->onUpdate('cascade');
             // $table->integer('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');

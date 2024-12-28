@@ -138,7 +138,8 @@
 
                                         <div><span class="wpcf7-form-control-wrap your-name">
                                             <select id="account_type" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required">
-                                            <option value="Customer" selected>Customer Account</option>
+                                            <option value="" selected disabled>------ User account type ------</option>
+                                            <option value="Customer">Customer Account</option>
                                             <option value="Business">Business Account</option>
                                             </select>
                                             </span></div> 

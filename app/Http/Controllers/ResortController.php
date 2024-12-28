@@ -2,7 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Session;
+use App\Http\Controllers\API\BaseController as BaseController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\DateTimeController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use App\Models\Settings;
 use App\Models\User;
 use App\Models\Shelter;
@@ -10,13 +16,12 @@ use App\Models\Rooms;
 use App\Models\ResortFeatures;
 use App\Models\AdminResortFeatures;
 use App\Models\roomNumber;
-use App\Http\Controllers\API\BaseController as BaseController;
+use App\Models\BusinessDetail;
+use App\Models\Country;
 use App\Http\Controllers\DateManagerController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\ Mail;
+use Illuminate\Support\Facades\Mail;
 use Intervention\Image\ImageManagerStatic as Image;
 
 class Room {
@@ -26,47 +31,251 @@ class Room {
 class ResortController extends BaseController
 {
 
-    public function create_resort_feature(Request $request){
-        $input = $request->all();
+    protected $user;
+    protected $settings;
+    public function __construct()
+    {
+        $this->middleware('business');
+    }
 
-        $validator = Validator::make($input, [
-            'resort-feature' => 'required',
-        ]);
 
-        if($validator->fails()){
-            return $this->showErrorMsg('Validation Error.', $validator->errors());       
+    
+    public function fetch_country_currency_list(){
+        $this->user =  Auth::user();
+        $business = $this->user->business_account()->where('business_category', 'Resort')->first();
+
+        if($business){
+            // $array_data = array();
+            $country = Country::where('name', '!=', $business->country)->get();
+            return response_data(true, 200, 'Countries fetched.', ['values' => $country], false, false);
+        }else{
+            return response_data(false, 422, "Could not fetch country data.", false, false, false);  
         }
+
+    }
+
+    public function index(){
+            $this->user =  Auth::user();
+            $this->settings = Settings::first();
+            $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+            $businesses = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+            //$resorts = $this->user->business_account()->resorts()->get();
+            $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+            $country = Country::where('name', $business_single->country)->first();
+            return view('home.business.resorts.create_resorts', ['settings' => $this->settings, 
+                                                                 'myselfs' => $myselfs, 
+                                                                 'businesses' => $businesses,
+                                                                 'business' => $business_single->resorts()->get(),
+                                                                 'country' => $country]); 
+    }
+
+    public function edit_resort_img($id){
+        
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+        $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+        // $resort = $business_single->resorts()->get();
+        $resorts = $business_single->resorts()->where('id', $id)->get();   
+    return view('home.business.resorts.edit_resort_img', ['settings' => $this->settings, 
+                                              'myselfs' => $myselfs, 
+                                              'businesses' => $business,
+                                            //   'resorts' => $resort, 
+                                              'resorts2' => $resorts,
+                                              'resortImg' => json_decode($resorts[0]->images)
+                                               ]);
+    
+    }
+
+
+
+
+    public function edit_resort_form($id){
+       
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+        $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+        // $resort = $business_single->resorts()->get();
+        $resorts = $business_single->resorts()->where('id', $id)->get();  
+
+        return view('home.business.resorts.update_resort', ['settings' => $this->settings, 
+                                           'myselfs' => $myselfs, 
+                                           'businesses' => $business,
+                                        //    'resorts' => $resort, 
+                                           'resorts2' => $resorts
+                                        ]);
+    
+       
+    }
+    
+    
+    
+    
+    public function edit_resort_features($id){
+        
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+        $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+        // $resort = $business_single->resorts()->get();
+            $resorts = $business_single->resorts()->where('id', $id)->get(); 
+            $features = $business_single->resorts()->where('id', $id)->first()->features()->get();
+            $features2 = AdminResortFeatures::orderBy('id', 'desc')->get();
+           
+            //$array_call = array();
+            if(count($features) > 0){
+               $array_call = $features;
+               $array_list = json_decode($features[0]->features);
+            }else{
+                $array_call = array();
+                $array_list = array();
+            }
+    
+    return view('home.business.resorts.edit_resort_features', ['settings' => $this->settings, 
+                                              'myselfs' => $myselfs, 
+                                              'businesses' => $business,
+                                            //   'resorts' => $resort, 
+                                              'resorts2' => $resorts, 
+                                              'admin_features' => $features2,
+                                              'features' => $array_call,
+                                              'feature_list' => $array_list
+                                            ]);
+    
+    
+    }
+    
+    public function create_room_form($id){
+        
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+        $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+        // $resort = $business_single->resorts()->get();
+        $resorts = $business_single->resorts()->where('id', $id)->get(); 
+        $rooms = $business_single->resorts()->where('id', $id)->first()->rooms()->get(); 
+
+            
+                return view('home.business.resorts.create_room', ['settings' => $this->settings, 
+                                                 'myselfs' => $myselfs, 
+                                                 'businesses' => $business,
+                                                //  'resorts' => $resort, 
+                                                 'resorts2' => $resorts, 
+                                                 'rooms' => $rooms]);
+    
+    
+    }
+    
+    public function update_room_page($resort, $id = NULL){
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+        $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+        // $resort = $business_single->resorts()->get();
+        $single_resort = $business_single->resorts()->where('id', $resort)->get(); 
+        $room = $single_resort[0]->rooms()->where('id', $id)->get(); 
+        
+            
+                return view('home.business.resorts.update_room', ['settings' => $this->settings, 
+                                                 'businesses' => $business,
+                                                 'myselfs' => $myselfs, 
+                                                 'resorts' => $single_resort, 
+                                                 'rooms' => $room]);
+    
       
-      $checkFeature = AdminResortFeatures::where('feature', $request->input('resort-feature'))->get();
-      if(count($checkFeature) > 0){
-      return $this->showErrorMsg($checkFeature[0]->feature.' is already on the list', $checkFeature);//return json response      
-      }else{
-      $newFeature = new AdminResortFeatures;
-      $newFeature->feature = $request->input('resort-feature');
-      $newFeature->save();
-      return $this->sendResponse($newFeature, 'A new resort feature added.');
-      }
     }
-
-    public function remove_resort_feature(Request $request){
-        $input = $request->all();
-
-        $validator = Validator::make($input, [
-            'feature_id' => 'required',
-            'feature_name' => 'required',
-        ]);
-
-        if($validator->fails()){
-            return $this->showErrorMsg('Validation Error.', $validator->errors());       
-        }
-
-        $deleteFeature = AdminResortFeatures::find($request->input('feature_id'));
-        $deleteFeature->delete();
-        return $this->sendResponse('success', $request->input('feature_name').' is removed from the list.');
+    
+    public function edit_room_img($resort, $id = NULL){
+    
+        
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+        $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+        // $resort = $business_single->resorts()->get();
+        $single_resort = $business_single->resorts()->where('id', $resort)->get(); 
+        $room = $single_resort[0]->rooms()->where('id', $id)->get(); 
+    
+            return view('home.business.resorts.edit_room_img', ['settings' => $this->settings, 
+                                               'businesses' => $business,
+                                               'myselfs' => $myselfs, 
+                                               'resorts' => $single_resort, 
+                                               'rooms' => $room,
+                                               'roomImg' => json_decode($room[0]->images)
+                                                 ]);
+      
+    
     }
+    
+
+
+
+    public function resort_owner_resort_booking_page($id){
+       
+            
+            $resort = Shelter::where('id', $id)->get(); 
+            $users = User::where('user_type', 'member')->orderBy('id', 'desc')->get(); 
+            $myself = User::where('id', Auth::user()->id)->get();
+            $reservation = Reservations::where('shelter_id', $resort[0]->id)->orderBy('id', 'desc')->get();
+            
+                return view('home.resort_booking', ['settings' => $settings, 'myselfs' => $myself, 'resorts' => $resort, 'users' => $users, 'reservations' => $reservation]);
+    
+     
+    }
+    
+    public function resort_owner_room_booking_page($resort, $id = NULL){
+    
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business = $this->user->business_account()->orderBy('created_at', 'desc')->get();
+        $business_single = $this->user->business_account()->where('business_category', 'Resort')->first();
+        // $resort = $business_single->resorts()->get();
+        $single_resort = $business_single->resorts()->where('id', $resort)->get(); 
+        $room = $single_resort[0]->rooms()->where('id', $id)->get(); 
+            
+            
+            
+            // $reservation = Reservations::where('room_id', $rooms[0]->id)->orderBy('id', 'desc')->get();
+            
+                return view('home.business.resorts.room_booking', ['settings' => $this->settings, 
+                                                  'businesses' => $business,
+                                                  'myselfs' => $myselfs, 
+                                                  'resorts' => $single_resort, 
+                                                  'rooms' => $room,
+                                                //   'reservations' => $reservation
+                                                ]);
+     
+     
+    
+    }   
+
+
+
+    
     
     public function create_new_resort(Request $request){//new resort form request
         $input = $request->all();//form request input handler
+
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
 
         $validator = Validator::make($input, [//input field validator
             'name' => 'required',
@@ -75,57 +284,104 @@ class ResortController extends BaseController
             'desc' => 'nullable',
             'price' => 'nullable',
             'curr' => 'nullable', 
-            //'feature' => 'nullable',
-            //'img_1' => 'required|image|mimes:jpeg,png,jpg,gif|max:6144',
-            //'img_2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:6144',
-            //'img_3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:6144',
-            //'img_4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:6144',
-            //'img_5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:6144',
-            //'img_6' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:6144',
-            //'img_7' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:6144',
-            //'img_8' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:6144',
+            
             'youtube' => 'nullable',
-            'uid' => 'required',    
+               
         ]);
 
         if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+            return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);         
         }
         //insert into shelter table model, parse form fields variables
-        $resort = new Shelter;
-        $resort->name = $request->input('name');
-        $resort->location = $request->input('location');
-        $resort->address = $request->input('address');
-        $resort->descr = $request->input('desc');
-        $resort->price = $request->input('price');
-        $resort->curr = $request->input('curr');
-        $resort->youtube = $request->input('youtube');
-        $resort->created_by = $request->input('uid');
-        $resort->save();//save data
+        $create_resort = $business_detail->resorts()->create([
+            'name' => $request->name,
+            'map_location' => $request->location,
+            'address' => $request->address,
+            'descr' => $request->desc,
+            'price' => $request->price,
+            'curr' => $request->curr,
+            'youtube' => $request->youtube,
+            'user_id' => $this->user->id
+        ]);
+        
 
-     //create resort directory and sub directories 
-     Storage::makeDirectory('public/img/resorts/'.$resort->id, 0775);
-     Storage::makeDirectory('public/img/resorts/'.$resort->id.'/images', 0775);
-     Storage::makeDirectory('public/img/resorts/'.$resort->id.'/rooms', 0775);
+     Storage::makeDirectory('public/img/users/'.$this->user->id.'/business/media/'.$create_resort->id, 0775);
 
-        return $this->sendResponse($resort, 'Resort created succesfully.');
+     if($create_resort){
+        
+        return response_data(true, 200, 'Resort created successfully.', ['values' => $create_resort], false, false);
+    }else{
+        return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+    }
 
     }
 
 
-   public function update_resort_img(Request $request){
-    $input = $request->all();
+    public function update_resort_input(Request $request){
+        $input = $request->all();
+
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
+        $validator = Validator::make($input, [
+            'resort' => 'required',
+            'price' => 'nullable',
+            'name' => 'required',
+            'location' => 'nullable',
+            'address' => 'nullable',
+            'desc' => 'nullable',
+            'youtube' => 'nullable',
+            'curr' => 'nullable',
+        ]);
     
+        if($validator->fails()){
+            return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);         
+        }
+    
+        
+$update_resort = $business_detail->resorts()
+                 ->where('id', $request->resort)
+                 ->update(['name' => $request->name, 
+                           'map_location' => $request->location, 
+                           'address' => $request->address, 
+                           'descr' => $request->desc, 
+                           'price' => $request->price, 
+                           'curr' =>  $request->curr,
+                           'youtube' => $request->youtube
+                          ]);
+ 
+
+$resort = $business_detail->resorts()->where('id', $request->resort)->first();
+
+if($update_resort){
+        
+    return response_data(true, 200, 'Resort updated successfully.', ['values' => $resort], false, false);
+}else{
+    return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+}
+    }
+
+   public function update_resort_img(Request $request){
+       $input = $request->all();//form request input handler
+
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
     $validator = Validator::make($input, [
         'resort' => 'required',
         'img_1' => 'required|image|mimes:jpeg,png,jpg,gif|max:6144',
     ]);
 
     if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
+        return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);      
     }
-
-    $resort = Shelter::where('id', $request->input('resort'))->get();
+    
+    $resort = $business_detail->resorts()->where('id', $request->resort)->first();
+    //$resort = Shelter::where('id', $request->input('resort'))->get();
 
     if($request->hasFile('img_1')){
         //get filename with the extension
@@ -136,30 +392,21 @@ class ResortController extends BaseController
         $extension = $request->file('img_1')->getClientOriginalExtension();
         //filename to store
         $fileNameToStore = str_replace(' ', '_', $filename).'_'.time().'.'.$extension;
-        $image = $request->file('img_1');
+        
+        $path = $request->file('img_1')->storeAs('public/img/users/'.$this->user->id.'/business/media/'.$resort->id, $fileNameToStore);
 
-        $destinationPath = public_path('storage/img/resorts/'.$request->input('resort').'/images');
-
-        $image->move($destinationPath, $fileNameToStore);
-        //$orgImgPath = $destinationPath.'/'.$fileNameToStore;
-        //$thumbPath = $destinationPath.'/'.$fileNameToStore;
-        //shell_exec("convert $orgImgPath -resize 200x200\! $thumbPath");
-
-        /*****************************************
-        $img = Image::make($image->path());
-        $img->resize(100, 100, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save('public/img/resorts/'.$resort->id.'/images/'.$fileNameToStore);
-        *****************************************/
+        
         }else{
         $fileNameToStore = "";
         }
 
-        $dir = asset('storage/img/resorts/'.$resort[0]->id.'/images');
-        
-        if ($resort[0]->images) {
+    
 
-            $getServerImg = json_decode($resort[0]->images, true);
+          $dir = asset('storage/img/users/'.$this->user->id.'/business/media/'.$resort->id);
+        
+        if ($resort->images) {
+
+            $getServerImg = json_decode($resort->images, true);
 
             $getServerImg[] = $dir.'/'.$fileNameToStore;
 
@@ -173,15 +420,18 @@ class ResortController extends BaseController
 
 
 
-        $update_resort_img = Shelter::where('id', $request->input('resort'))->update([
+        $update_resort_img = $business_detail->resorts()->where('id', $request->resort)->update([
             'img_1' => $getServerImg[0],
             'images' => json_encode($getServerImg)
         ]);
 
-    if($update_resort_img){
-     //Redirect::url('admin/edit_resort_img/'.$resort[0]->id);
-     return $this->sendResponse($update_resort_img, 'Image uploaded succesfully.');
-    }
+    $fetch_resort = $business_detail->resorts()->where('id', $request->resort)->first();
+        if($update_resort_img){
+        
+            return response_data(true, 200, 'Resort image uploaded successfully.', ['values' => $fetch_resort], false, false);
+        }else{
+            return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+        }
 
    }
 
@@ -232,160 +482,117 @@ class ResortController extends BaseController
     //$input = $request->all();
 
     $input = $request->all();
+
+    $this->user =  Auth::user();
+    $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+    $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
+    
     
     $validator = Validator::make($input, [
         'resort' => 'required',
-        //'img_1' => 'required|image|mimes:jpeg,png,jpg,gif|max:6144',
-        'feature' => 'nullable',
+        'feature' => 'required',
+        'feature_price' => 'required',
+        'feature_duration' => 'required',
     ]);
 
     if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
+        return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);     
     }
 
-     $features = ResortFeatures::where('resort_id', $request->input('resort'))->get();
+   
+   $resort = $business_detail->resorts()->where('id', $request->resort)->first();
 
-    if(count($features) > 0){
-     if ($features[0]->features) {
+    foreach($request->feature as $key => $feature ){
+        
+    $check_feature = $resort->features()->where('features', $feature)->first();
 
-        $getServerImg = json_decode($features[0]->features, true);
-
-        foreach($request->input('feature') as $feature){
-            $getServerImg[] = $feature;
-            }
-
-        //$getServerImg[] = $request->input('feature');
-
-    } else {
-
-        $getServerImg = array();
-
-        //$getServerImg[] = $request->input('feature');
-
-        foreach($request->input('feature') as $feature){
-            $getServerImg[] = $feature;
-            }
+    if( $check_feature ){
+                    $update_feature = $resort->features()
+                    ->where('features', $feature)
+                           ->update(['curr' => $resort->curr,
+                                     'price' => $request->feature_price[$key],
+                                     'duration' => $request->feature_duration[$key]
+                                     ]);
+                }else{
+                  $add_feature = $resort->features()
+                      ->create(['features' => $feature,
+                                'curr' => $resort->curr,
+                                'price' => $request->feature_price[$key],
+                                'duration' => $request->feature_duration[$key]
+                   ]);
+                }
 
     }
 
-    $update_resort_feature = ResortFeatures::where('resort_id', $request->input('resort'))->update([
-        'features' => json_encode($getServerImg)
-    ]);
-
-    if($update_resort_feature){
-        $data = array('resort_id' => $request->input('resort'));
-        //Redirect::url('admin/edit_resort_img/'.$resort[0]->id);
-        return $this->sendResponse($data, 'Features updated succesfully.');
-       }
-
-}else{
-    $getServerImg = array();
-
-    //$feature = json_decode($request->input('feature'), true);
-
-    foreach($request->input('feature') as $feature){
-    $getServerImg[] = $feature;
+     
+    $fetch_features = $resort->features()->orderBy('created_at', 'desc')->get();
+    if(isset($add_feature)){
+        return response_data(true, 200, 'Resort features added successfully.', ['values' => $fetch_features], false, false);
+    } else if(isset($update_feature)){
+        return response_data(true, 200, 'Resort features updated successfully.', ['values' => $fetch_features], false, false);
+    }else{
+        return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
     }
-    $update_resort_feature = new ResortFeatures;
-    $update_resort_feature->resort_id = $request->input('resort');
-    $update_resort_feature->features =  json_encode($getServerImg);
-    $update_resort_feature->save();
-
-    if($update_resort_feature){
-        //Redirect::url('admin/edit_resort_img/'.$resort[0]->id);
-        return $this->sendResponse($update_resort_feature, 'Features updated succesfully.');
-       }
-
-}
-
-
-
+        
+     
     
    }
 
 
    public function remove_resort_user_feature(Request $request){
     $input = $request->all();
+
+    $input = $request->all();
+
+    $this->user =  Auth::user();
+    $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+    $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
     
     $validator = Validator::make($input, [
-        'resort' => 'required',
-        'key_num' => 'required',
+        'resort' => 'required|integer',
+        'feature_id' => 'required|integer',
     ]);
 
     if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
+        return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);         
     }
 
-     $features = ResortFeatures::where('resort_id', $request->input('resort'))->get();
+    $resort = $business_detail->resorts()->where('id', $request->resort)->first();
 
-    
-     $getServerImg = json_decode($features[0]->features, true);
+    $resort_feature = $resort->features()->where('id', $request->feature_id)->first();
 
-
-
-    unset($getServerImg[$request->input('key_num')]);//unset object number of the array
-
-
-    //update resort_features table
-    $update = ResortFeatures::where('resort_id', $request->input('resort'))->update([
-
-        'features' => json_encode($getServerImg)
-
-    ]);
-
-
-
-    if ($update) {
-
-        return $this->sendResponse($update, 'Image removed succesfully.');
-
+    if($resort_feature){
+     $delete_feature = $resort->features()->where('id', $request->feature_id)->delete();
+     return response_data(true, 200, 'Resort feature deleted successfully.', false, false, false);
+    }else{
+    return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
     }
-
 
     
    }
 
 
-    public function update_resort_input(Request $request){
-        $input = $request->all();
     
-        $validator = Validator::make($input, [
-            'resort' => 'required',
-            'price' => 'nullable',
-            'name' => 'required',
-            'location' => 'nullable',
-            'address' => 'nullable',
-            'desc' => 'nullable',
-            'youtube' => 'nullable',
-            'curr' => 'nullable',
-        ]);
-    
-        if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
-        }
-    
-        
-$resort2 = Shelter::where('id', $request->input('resort'))->update(['name' => $request->input('name'), 
-                                                                   'location' => $request->input('location'), 
-                                                                   'address' => $request->input('address'), 
-                                                                   'descr' => $request->input('desc'), 
-                                                                   'price' => $request->input('price'), 
-                                                                   'curr' =>  $request->input('curr'),
-                                                                   'youtube' => $request->input('youtube')]);
-if($resort2){                 
-return $this->sendResponse($resort2, 'resort info updated succesful.'); 
-} 
-    }
 
 
 
 
     public function upload_rooms_info(Request $request){
         $input = $request->all();
+
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
     
         $validator = Validator::make($input, [
             'resort' => 'required',
-            'curr' => 'required',
+            'type' => 'required',
             'name' => 'required',
             'price' => 'nullable',
             'desc' => 'required',
@@ -396,31 +603,107 @@ return $this->sendResponse($resort2, 'resort info updated succesful.');
         ]);
     
         if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+            return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);         
         }
-    
-        $room = new Rooms;
-        $room->shelter_id = $request->input('resort');
-        $room->room_no = $request->input('name');
-        $room->descr = $request->input('desc');
-        $room->qnty = $request->input('qnty');
-        $room->capacity = $request->input('capacity');
-        $room->amount = $request->input('price');
-        $room->curr = $request->input('curr');
-        $room->location = $request->input('location');
-        $room->created_by = Auth::user()->id;
-        $room->save();
-    
-        Storage::makeDirectory('public/img/resorts/'.$request->input('resort').'/rooms/'.$room->id, 0775);
-          
-        return $this->sendResponse($room, 'Room created succesfully.');  
+
+        $resort = $business_detail->resorts()->where('id', $request->resort)->first();
+
+        $check_room = $resort->rooms()->where('room_name', $request->name)->get();
+
+        if(count($check_room) > 0){
+            return response_data(false, 422, "Name entered already exists, please check your list.", false, false, false);
+        }else{
+                    $create_room = $resort->rooms()->
+                                 create(['room_name' => $request->name,
+                                         'type' => $request->type,
+                                         'descr' => $request->desc,
+                                         'available_number' => $request->qnty,
+                                         'capacity' => $request->capacity,
+                                         'price' => $request->price,
+                                         'curr' => $resort->curr
+                                         ]);
+
+Storage::makeDirectory('public/img/users/'.$this->user->id.'/business/media/'.$resort->id.'/rooms/'.$create_room->id, 0775);
+
+    if($create_room){
+        
+        return response_data(true, 200, 'Room created successfully.', ['values' => $create_room], false, false);
+    }else{
+        return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+    }
+        }
+     
     
     }
+
+
+
+    public function update_rooms_info(Request $request){
+        $input = $request->all();
+    
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
+
+        $validator = Validator::make($input, [
+            'resort' => 'required',
+            'room' => 'required',
+            'name' => 'required',
+            'type' => 'required',
+            'price' => 'required',
+            'desc' => 'required',
+            'qnty' => 'required',
+            'capacity' => 'required',
+            //'location' => 'nullable',    
+        ]);
+    
+        if($validator->fails()){
+            return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);         
+        }
+    
+        $resort = $business_detail->resorts()->where('id', $request->resort)->first();
+
+        $check_room = $resort->rooms()->where('id', $request->room)->get();
+
+        if(count($check_room) > 0){
+            $update_room = $resort->rooms()
+                   ->where('id', $request->room)
+                               ->update(['room_name' => $request->name,
+                                         'type' => $request->type,
+                                         'descr' => $request->desc,
+                                         'available_number' => $request->qnty,
+                                         'capacity' => $request->capacity,
+                                         'price' => $request->price,
+                                         'curr' => $resort->curr
+                                         ]);
+   
+    $fetch_room_data = $resort->rooms()->where('id', $request->room)->first();
+    if($update_room){
+        
+        return response_data(true, 200, 'Room info updated successfully.', ['values' => $fetch_room_data], false, false);
+    }else{
+        return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+    }  
+        }else{
+            return response_data(false, 422, "Error: there's a problem with this request.", false, false, false);  
+        }
+
+    }
+
+
 
 public function update_resort_room_img(Request $request){
  
     $input = $request->all();
     
+    $this->user =  Auth::user();
+    $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+    $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
+
         $validator = Validator::make($input, [
             'resort' => 'required',
             'room' => 'required',
@@ -430,12 +713,18 @@ public function update_resort_room_img(Request $request){
         ]);
     
         if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+            return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);         
         }
 
-    $rooms = Rooms::where('id', $request->input('room'))->get();
+        $resort = $business_detail->resorts()->where('id', $request->resort)->first();
+
+        $rooms = $resort->rooms()->where('id', $request->room)->get();
+
+    if(count($rooms) > 0){
 
     if($request->hasFile('img_1')){
+
+    
         //get filename with the extension
         $fileNameWithExt = $request->file('img_1')->getClientOriginalName();
         //get just filename
@@ -444,14 +733,15 @@ public function update_resort_room_img(Request $request){
         $extension = $request->file('img_1')->getClientOriginalExtension();
         //filename to store
         $fileNameToStore = str_replace(' ', '_', $filename).'_'.time().'.'.$extension;
-        $path = $request->file('img_1')->storeAs('public/img/resorts/'.$rooms[0]->shelter_id.'/rooms/'.$rooms[0]->id, $fileNameToStore);
+        $path = $request->file('img_1')->storeAs('public/img/users/'.$this->user->id.'/business/media/'.$rooms[0]->resort_id.'/rooms/'.$rooms[0]->id, $fileNameToStore);
 
         }else{
         $fileNameToStore = "";
         }
 
+        
     
-        $dir = asset('storage/img/resorts/'.$rooms[0]->shelter_id.'/rooms/'.$rooms[0]->id);
+        $dir = asset('storage/img/users/'.$this->user->id.'/business/media/'.$rooms[0]->resort_id.'/rooms/'.$rooms[0]->id);
         
         if ($rooms[0]->images) {
 
@@ -468,18 +758,28 @@ public function update_resort_room_img(Request $request){
         }
 
 
-
-        $update_room_img = Rooms::where('id', $request->input('room'))->update([
-            'img_1' => $getServerImg[0],
-            'images' => json_encode($getServerImg)
-        ]);
+        
+        $update_room_img = $resort->rooms()
+                   ->where('id', $request->room)
+                               ->update([
+                                        'img_1' => $getServerImg[0],
+                                        'images' => json_encode($getServerImg)
+                                         ]);
+        
+ 
 
     if($update_room_img){
-     //Redirect::url('admin/edit_resort_img/'.$resort[0]->id);
-     return $this->sendResponse($update_room_img, 'Image uploaded succesfully.');
+        
+        return response_data(true, 200, 'Room images uploaded successfully.', false, false, false);
+    }else{
+        return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+    }  
+
+    }else{
+
+        return response_data(false, 422, "Error: there's a problem with this request.", false, false, false);  
+
     }
-
-
     
 }
 
@@ -487,8 +787,14 @@ public function update_resort_room_img(Request $request){
 public function remove_resort_room_img(Request $request){
 
     $input = $request->all();
-    
+
+    $this->user =  Auth::user();
+    $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+    $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
     $validator = Validator::make($input, [
+        'resort' => 'required',
         'room' => 'required',
         'key_num' => 'required',
     ]);
@@ -496,10 +802,15 @@ public function remove_resort_room_img(Request $request){
     //$id = Input::get('resort'); 
 
     //$arrID = Input::get('arrID');
+    if($validator->fails()){
+        return response_data(false, 422, "Sorry a Validation Error Occured", ['errors' => $validator->errors()->all()], false, false);         
+    }
 
+    $resort = $business_detail->resorts()->where('id', $request->resort)->first();
 
+    $rooms = $resort->rooms()->where('id', $request->room)->get();
 
-    $rooms = Rooms::where('id', $request->input('room'))->get();
+    
 
     $getServerImg = json_decode($rooms[0]->images, true);
 
@@ -509,7 +820,7 @@ public function remove_resort_room_img(Request $request){
 
 
 
-    $update = Rooms::where('id', $request->input('room'))->update([
+    $update = $resort->rooms()->where('id', $request->room)->update([
 
         'images' => json_encode($getServerImg)
 
@@ -517,52 +828,34 @@ public function remove_resort_room_img(Request $request){
 
 
 
-    if ($update) {
-
-        return $this->sendResponse($update, 'Image removed succesfully.');
-
-    }
+    if($update){
+        
+        return response_data(true, 200, 'Room image removed successfully.', false, false, false);
+    }else{
+        return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+    }  
 
 }
 
 
 //
-public function update_rooms_info(Request $request){
-        $input = $request->all();
-    
-        $validator = Validator::make($input, [
-            'resort' => 'required',
-            'room' => 'required',
-            'name' => 'required',
-            'price' => 'nullable',
-            'desc' => 'required',
-            'qnty' => 'required',
-            'capacity' => 'required',
-            'location' => 'nullable',    
-        ]);
-    
-        if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
-        }
-    
-        $room = Rooms::find($request->input('room'));
-        $room->shelter_id = $request->input('resort');
-        $room->room_no = $request->input('name');
-        $room->descr = $request->input('desc');
-        $room->qnty = $request->input('qnty');
-        $room->capacity = $request->input('capacity');
-        $room->amount = $request->input('price');
-        $room->location = $request->input('location');
-        $room->save();
-     return $this->sendResponse($room, 'Room updates succesfully.');  
-    }
 
 
-    public function delete_resort(Request $request){
-        $resort = Shelter::find($request->input('uid'));
-        $resort->delete();
-        $room = DB::table('rooms')->where('shelter_id', $resort->id)->delete();
-        return $this->sendResponse($resort, 'resort deleted.');
+
+    public function delete_resort($id){
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
+        $delete_resort = $business_detail->resorts()->find($id);
+
+        $delete_resort->delete();
+       
+        if($delete_resort){
+        
+            return response_data(true, 200, 'Resort deleted successfully.', false, false, false);
+        }else{
+            return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+        }  
     }
     
     public function delete_room(Request $request){
@@ -575,6 +868,12 @@ public function update_rooms_info(Request $request){
     public function sub_room_create(Request $request){
         $input = $request->all();
     
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
+
         $validator = Validator::make($input, [
             'resort_id' => 'required',
             'room_id' => 'required',
@@ -589,25 +888,35 @@ public function update_rooms_info(Request $request){
     $room_id = $request->input('room_id');
     $room = $request->input('room');
 
-    $checkRoom = roomNumber::where(function($p) use($resort_id, $room_id, $room){
-        $p->where('resort_id', '=', $resort_id);
+    $resort = $business_detail->resorts()->where('id', $request->resort_id)->first();
+
+        $check_room = $resort->rooms()->where('id', $request->room_id)->first();
+
+    $checkRoom = $check_room->room_numbers()->where(function($p) use($room_id, $room){
         $p->where('room_id', '=', $room_id);
         $p->where('name', '=', $room);
    })->get();//query roomNumber model table
    if(count($checkRoom) > 0){
-       return $this->showErrorMsg($checkRoom[0]->name.' already exist under this category', $checkRoom);
+    return response_data(false, 422, $checkRoom[0]->number." already exist on the list.", false, false, false);      
    }else{
-    $subRoom = new roomNumber;
-    $subRoom->resort_id = $request->input('resort_id');
-    $subRoom->room_id = $request->input('room_id');
-    $subRoom->name = $request->input('room');
-    $subRoom->capacity = $request->input('capacity');
-    $subRoom->status = "Ready";
-    $subRoom->save();
-    //header('Content-Type: application/json');
-    //echo json_encode($subRoom);
-    return $this->sendResponse($subRoom, 'room added.');
+    $subRoom = $check_room->room_numbers()->create([
+        
+        'name' => $request->input('room'),
+        'capacity' => $request->input('capacity'),
+        'status' => 'Ready'
+    ]);
+    
+
+   if($subRoom){
+        
+    return response_data(true, 200, 'Room number added successfully.', ['values' => $subRoom], false, false);
+}else{
+    return response_data(false, 422, "Error occured, please try again later.", false, false, false);  
+}  
+
    }
+    
+
     }
 
 
@@ -633,11 +942,24 @@ public function update_rooms_info(Request $request){
 //$resort_id = isset($params->resort_id) ? $params->resort_id : '0';
 //$room_id = isset($params->room_id) ? $params->room_id : '0';
 
-    $checkRoom = roomNumber::where(function($p) use($resort_id, $room_id){
-        $p->where('resort_id', '=', $resort_id);
-        $p->where('room_id', '=', $room_id);
+        $this->user =  Auth::user();
+        $this->settings = Settings::first();
+        //$myselfs = User::where('id', $this->user->id)->first();//fetch authenticated user data from users database table
+            
+        $business_detail = $this->user->business_account()->where('business_category', 'Resort')->first();
+
+
+        $resort = $business_detail->resorts()->where('id', $resort_id)->first();
+
+        $check_room = $resort->rooms()->where('id', $room_id)->first();
+
+    $checkRoom = $check_room->room_numbers()->get();//query roomNumber model table
+
+//     $checkRoom = roomNumber::where(function($p) use($resort_id, $room_id){
+//         $p->where('resort_id', '=', $resort_id);
+//         $p->where('room_id', '=', $room_id);
         
-   })->get();//query roomNumber model table
+//    })->get();//query roomNumber model table
    //if(count($checkRoom) > 0){
     //return $this->sendResponse($checkRoom, 'sub rooms fetched.');
        
@@ -728,10 +1050,7 @@ echo json_encode($updateRoom->id);
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
-    }
+   
 
     /**
      * Show the form for creating a new resource.

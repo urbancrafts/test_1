@@ -3,6 +3,19 @@ jQuery(document).ready(function(){
   var site_url = "http://127.0.0.1:8000";//full site domain url
 
 
+
+  var Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 9000,
+    customClass: {
+      container: 'custom-toast', // Apply the custom class here
+      'font-size': '22px'
+    }
+  });
+
+
 // var changeElementBorderStyle = function(elem){
 //   jQuery('elem).css('border', 'solid 1px gray');
 // }
@@ -57,8 +70,13 @@ jQuery(document).ready(function(){
         var urlPath = site_url;
         
         if(jQuery.trim(jQuery("#login-email").val()) == "" || jQuery.trim(jQuery("#login-password").val()) == ""){
-          jQuery(".login-alert-error").show();
-            jQuery(".login-alert-error").html(" Enter your email address and password!");
+          // jQuery(".login-alert-error").show();
+          //   jQuery(".login-alert-error").html(" Enter your email address and password!");
+
+            Toast.fire({
+              icon: 'error',
+              title: 'Enter your email and password!'
+            });
 
         }else{
         
@@ -71,9 +89,13 @@ jQuery(document).ready(function(){
             url: action,
             data: {"email": loginId, "password": pass},
             beforeSend:function(){
-              jQuery(".login-alert-error").hide();
-              jQuery('.login-status').show();
-                jQuery('.login-status').html(" Attempting to login...");
+              // jQuery(".login-alert-error").hide();
+              // jQuery('.login-status').show();
+              //   jQuery('.login-status').html(" Attempting to login...");
+              Toast.fire({
+                icon: 'info',
+                title: 'Attempting to login...'
+              });
             },
             complete:function(){
                 
@@ -82,9 +104,13 @@ jQuery(document).ready(function(){
             success:function(data){
               
               if(data.status == true){
-                jQuery("#sendEmail").prop('disabled', true);
-                jQuery(".login-status").show();
-                jQuery(".login-status").html(data.message);
+                // jQuery("#sendEmail").prop('disabled', true);
+                // jQuery(".login-status").show();
+                // jQuery(".login-status").html(data.message);
+                Toast.fire({
+                  icon: 'success',
+                  title: data.message
+                })
                 if(data.data.values.user_type == "Customer" ){//check if session user_type is customer
                  window.location = site_url+"/auth/customer/dashboard";//redirect to customer page
                  }else if(data.data.values.user_type == "Business" && data.data.values.is_business_verified == 0){//check if session user_type is business and is not verified
@@ -97,46 +123,74 @@ jQuery(document).ready(function(){
                    window.reload();
                  }
                }else if(data.status == false){
-                 jQuery(".login-status").hide();
-                 jQuery(".login-alert-error").show();
-                 jQuery(".login-alert-error").html(data.message);
-               }else{
-                 jQuery(".login-status").hide();
-                 jQuery(".login-alert-error").show();
-                 jQuery(".login-alert-error").html(data);
-               }
+                //  jQuery(".login-status").hide();
+                //  jQuery(".login-alert-error").show();
+                //  jQuery(".login-alert-error").html(data.message);
+                Toast.fire({
+                  icon: 'error',
+                  title: data.message
+                });
+
+                      }else{
+                        Toast.fire({
+                          icon: 'error',
+                          title: data
+                        });
+                  
+                                }
 
             },
 
             error:function(jqXHR, exception){
 
               if(jqXHR.status === 0){
-                jQuery(".login-status").hide();
-                jQuery(".login-alert-error").fadeIn('slow');
-                jQuery('.login-alert-error').html('Please check your internet connection.');	
+                Toast.fire({
+                  icon: 'warning',
+                  title: 'Please check your internet connection'
+                });
+                // jQuery(".login-status").hide();
+                // jQuery(".login-alert-error").fadeIn('slow');
+                // jQuery('.login-alert-error').html('Please check your internet connection.');	
                
               }else if(jqXHR.status == 404){
-                jQuery(".login-status").hide();
-                jQuery(".login-alert-error").fadeIn('slow');
-                jQuery('.login-alert-error').html('Request route not found.');
+                // jQuery(".login-status").hide();
+                // jQuery(".login-alert-error").fadeIn('slow');
+                // jQuery('.login-alert-error').html('Request route not found.');
+                Toast.fire({
+                  icon: 'info',
+                  title: 'Request route not found.'
+                });
               }else if(jqXHR.status == 500){
-                jQuery(".login-status").hide();
-                jQuery(".login-alert-error").fadeIn('slow');
-                jQuery('.login-alert-error').html('Internal Server Error [500]');
+                // jQuery(".login-status").hide();
+                // jQuery(".login-alert-error").fadeIn('slow');
+                // jQuery('.login-alert-error').html('Internal Server Error [500]');
+
+                Toast.fire({
+                  icon: 'error',
+                  title: 'Internal Server Error [500]'
+                });
                 
               }else if(jqXHR.status == 400){
                 var errors = jqXHR.responseJSON;
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html(errors.message);
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html(errors.message);
+          Toast.fire({
+            icon: 'error',
+            title: errors.message
+          });
 
               }else if(jqXHR.status == 401){
                 var data = jqXHR.responseJSON;
-                jQuery(".login-status").hide();
-                jQuery(".login-alert-error").fadeIn('slow');
-                jQuery('.login-alert-error').html(data.message);
+                // jQuery(".login-status").hide();
+                // jQuery(".login-alert-error").fadeIn('slow');
+                // jQuery('.login-alert-error').html(data.message);
               //  jQuery('.login-status').show();
               //  jQuery('.login-status').html(data.message);
+              Toast.fire({
+                icon: 'info',
+                title: data.message
+              });
             
             jQuery("#model-request-form").hide();
             jQuery('#otp-form').show();
@@ -146,24 +200,40 @@ jQuery(document).ready(function(){
           // $.each(json.responseJSON, function (key, value) {
           //     $('.'+key+'-error').html(value);
           // });
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html(errors.data.errors);
+          Toast.fire({
+            icon: 'error',
+            title: errors.data.errors
+          });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html(errors.data.errors);
           
               }else if(exception === 'parsererror'){
-                jQuery(".login-status").hide();
-                jQuery(".login-alert-error").fadeIn('slow');
-                jQuery('.login-alert-error').html('Requested JSON parse failed');
+                Toast.fire({
+                  icon: 'info',
+                  title: 'Requested JSON parse failed'
+                });
+                // jQuery(".login-status").hide();
+                // jQuery(".login-alert-error").fadeIn('slow');
+                // jQuery('.login-alert-error').html('Requested JSON parse failed');
                 
               }else if(exception === 'timeout'){
-                jQuery(".login-status").hide();
-                jQuery(".login-alert-error").fadeIn('slow');
-                jQuery('.login-alert-error').html('Time out error');
+                Toast.fire({
+                  icon: 'info',
+                  title: 'Request time out.'
+                });
+                // jQuery(".login-status").hide();
+                // jQuery(".login-alert-error").fadeIn('slow');
+                // jQuery('.login-alert-error').html('Time out error');
                 
               }else if(exception === 'abort'){
-                jQuery(".login-status").hide();
-                jQuery(".login-alert-error").fadeIn('slow');
-                jQuery('.login-alert-error').html('Ajax request aborted');
+                Toast.fire({
+                  icon: 'info',
+                  title: 'Ajax request aborted'
+                });
+                // jQuery(".login-status").hide();
+                // jQuery(".login-alert-error").fadeIn('slow');
+                // jQuery('.login-alert-error').html('Ajax request aborted');
                 
               }
                 
@@ -202,6 +272,11 @@ jQuery("#cpass").on('focus', function(e){
   jQuery(this).css('border', 'solid 0px');
 });
 
+jQuery("#account_type").on('focus', function(e){
+  jQuery(this).css('border', 'solid 0px');
+});
+
+
 jQuery("#otp_code").on('focus', function(e){
   jQuery(this).css('border', 'solid 0px');
 });
@@ -233,40 +308,86 @@ jQuery("#mem_signup").on("submit", function(e){//create a submit event for the u
   
   if(jQuery.trim(jQuery("#first_name").val()) == ""){//check if name field is empty
       jQuery("#first_name").css('border', 'solid 1px #c03826');
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery(".login-alert-error").html("Enter your first name!");
+      Toast.fire({
+        icon: 'error',
+        title: 'Enter your first name!'
+      });
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery(".login-alert-error").html("Enter your first name!");
   }else if(jQuery.trim(jQuery("#last_name").val()) == ""){//check if name field is empty
     jQuery("#last_name").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html("Enter your last name!");
+    Toast.fire({
+      icon: 'error',
+      title: 'Enter your last name!'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html("Enter your last name!");
   }else if(jQuery.trim(email) == ""){//check if email field is empty
     jQuery(email).css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html(" Enter your email address!");
+    Toast.fire({
+      icon: 'error',
+      title: 'Enter your email address!'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html(" Enter your email address!");
   }else if(jQuery.trim(jQuery("#phone").val()) == ""){//check if phone field is empty
     jQuery("#phone").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html(" Enter your phone number!");
+    Toast.fire({
+      icon: 'error',
+      title: 'Enter your phone number!'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html(" Enter your phone number!");
   }else if(!Number(jQuery("#phone").val())){//check if phone field entry is not numeric
     jQuery("#phone").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html("Phone number must be numeric!");
+    Toast.fire({
+      icon: 'error',
+      title: 'Phone number must be numeric!'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html("Phone number must be numeric!");
   
-  }else if(jQuery.trim(jQuery("#pass").val()) == "" || jQuery.trim(jQuery("#pass").val()).length < 6){//check if password field is empty or data length is less than six(6)
+  }else if(jQuery.trim(jQuery("#pass").val()) == ""){//check if password field is empty or data length is less than six(6)
     jQuery("#pass").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html("Password must not be less than six(6) characters!");
+
+    Toast.fire({
+      icon: 'error',
+      title: 'Enter password'
+    });
+
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html("Enter password");
   }else if(jQuery.trim(jQuery("#cpass").val()) == ""){//check if confirm password field is empty
     jQuery("#cpass").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html(" Confirm your password");
+    Toast.fire({
+      icon: 'error',
+      title: 'Confirm your password'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html(" Confirm your password");
   }else if(jQuery.trim(jQuery("#cpass").val()) != jQuery("#pass").val()){//check if confirm password entry matches with password
     jQuery("#cpass").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html(" Confirmed password does not match with password entry");
+    Toast.fire({
+      icon: 'error',
+      title: 'Confirmed password does not match with password entry'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html(" Confirmed password does not match with password entry");
+  }else if(jQuery.trim(jQuery("#account_type").val()) == ""){//check if confirm password entry matches with password
+    jQuery("#account_type").css('border', 'solid 1px #c03826');
+    Toast.fire({
+      icon: 'error',
+      title: 'Select user account type'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html(" Select user account type");
   }else if(!jQuery("#terms").prop("checked")){//check if terms & condition checkbox is not checked
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html(" Read and agree with our terms by checking the box");
+    Toast.fire({
+      icon: 'error',
+      title: 'Read and agree with our terms by checking the box'
+    });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html(" Read and agree with our terms by checking the box");
   }else{
       //else call the ajax function
       jQuery.ajax({
@@ -283,6 +404,10 @@ jQuery("#mem_signup").on("submit", function(e){//create a submit event for the u
           //jQuery('.login-status').html("<class=Processing data...");
           //jQuery("#register-btn").prop('disabled', true);
           //jQuery("#register-btn").html('<div class="loader"> </div>')
+          Toast.fire({
+            icon: 'info',
+            title: 'Request processing...'
+          });
       },
       complete:function(){
           
@@ -293,21 +418,34 @@ jQuery("#mem_signup").on("submit", function(e){//create a submit event for the u
             //jQuery('#register-btn').prop('disabled', true);
             //jQuery(".register-error").hide();
             //jQuery(".register-success").fadeIn('slow');
-            jQuery('.login-status').show();
-            jQuery('.login-status').html(data.message);
+            
+            // jQuery('.login-status').show();
+            // jQuery('.login-status').html(data.message);
+            Toast.fire({
+              icon: 'success',
+              title: data.message
+            });
             
             jQuery("#mem_signup").hide();
             jQuery('#otp-form').show();
             jQuery('#otp-form').html("\r\n<h3>Confirm OTP Code<\/h3><input type=\'hidden\' id=\'site_url\' value=\'"+site_url+"\'><input type=\'hidden\' id=\'type\' name=\'type\' value=\'email_verification\'><input type=\'hidden\' id=\'user_id\' name=\'user_id\' value=\'"+data.data.user.id+"\'><div><span class=\'wpcf7-form-control-wrap otp-code\'><input type=\'text\' id=\'otp_code\' class=\'wpcf7-form-control wpcf7-text wpcf7-validates-as-required\' placeholder=\'OTP Code\' name=\'otp_code\'><\/span><\/div> <div class=\'row\'><div class=\'col-lg-8\'> <div class=\'login-horizental\'><button class=\'button alt btn req-btn\' type=\'submit\'>Verify<\/button><\/div><\/div><\/div>\r\n");
               
           }else if(data.status == false){
-            jQuery(".login-status").hide();
-            jQuery(".login-alert-error").fadeIn('slow');
-            jQuery('.login-alert-error').html(data.message);	
+            Toast.fire({
+              icon: 'error',
+              title: data.message
+            });
+            // jQuery(".login-status").hide();
+            // jQuery(".login-alert-error").fadeIn('slow');
+            // jQuery('.login-alert-error').html(data.message);	
                   }else{
-              jQuery(".login-status").hide();
-              jQuery(".login-alert-error").fadeIn('slow');
-              jQuery('.login-alert-error').html(data);
+                    Toast.fire({
+                      icon: 'error',
+                      title: data
+                    });
+              // jQuery(".login-status").hide();
+              // jQuery(".login-alert-error").fadeIn('slow');
+              // jQuery('.login-alert-error').html(data);
                             }
       },
 
@@ -315,42 +453,70 @@ jQuery("#mem_signup").on("submit", function(e){//create a submit event for the u
       error:function(jqXHR, exception){
 
         if(jqXHR.status === 0){
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html('Please check your internet connection.');	
+          Toast.fire({
+            icon: 'warning',
+            title: 'Please check your internet connection.'
+          });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html('Please check your internet connection.');	
          
         }else if(jqXHR.status == 404){
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html('Request route not found.');
+          Toast.fire({
+            icon: 'info',
+            title: 'Request route not found.'
+          });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html('Request route not found.');
         }else if(jqXHR.status == 500){
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html('Internal Server Error [500]');
+          Toast.fire({
+            icon: 'error',
+            title: 'Internal Server Error [500]'
+          });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html('Internal Server Error [500]');
           
         }else if(jqXHR.status == 422){
           var errors = jqXHR.responseJSON;
     // $.each(json.responseJSON, function (key, value) {
     //     $('.'+key+'-error').html(value);
     // });
-    jQuery(".login-status").hide();
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery('.login-alert-error').html(errors.data.errors);
+    Toast.fire({
+      icon: 'error',
+      title: errors.data.errors
+    });
+    // jQuery(".login-status").hide();
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery('.login-alert-error').html(errors.data.errors);
     
         }else if(exception === 'parsererror'){
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html('Requested JSON parse failed');
+          Toast.fire({
+            icon: 'info',
+            title: 'Requested JSON parse failed'
+          });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html('Requested JSON parse failed');
           
         }else if(exception === 'timeout'){
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html('Time out error');
+          Toast.fire({
+            icon: 'info',
+            title: 'Request time out'
+          });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html('Time out error');
           
         }else if(exception === 'abort'){
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html('Ajax request aborted');
+          Toast.fire({
+            icon: 'info',
+            title: 'Ajax request aborted'
+          });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html('Ajax request aborted');
           
         }
           
@@ -374,8 +540,12 @@ var type = jQuery('#type').val();
 
 if(jQuery.trim(jQuery("#otp_code").val()) == ""){
   jQuery("#otp_code").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html(" Enter the OTP code sent to your mail");
+  Toast.fire({
+    icon: 'error',
+    title: 'Enter the OTP code sent to your mail'
+  });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html(" Enter the OTP code sent to your mail");
 }else{
   jQuery.ajax({
     headers: {
@@ -386,19 +556,27 @@ if(jQuery.trim(jQuery("#otp_code").val()) == ""){
    url: action,
    data: {"user_id": user_id, "otp_code": otp_code, 'type': type},
    beforeSend:function(){
-       jQuery(".login-status").show();
-       jQuery('.login-alert-error').hide();
-       jQuery(".login-status").html("<div class='load'>Loading...</div>");
+      //  jQuery(".login-status").show();
+      //  jQuery('.login-alert-error').hide();
+      //  jQuery(".login-status").html("<div class='load'>Loading...</div>");
+       Toast.fire({
+        icon: 'info',
+        title: 'Request processing...'
+      });
    },
    complete:function(){
-       jQuery(".load").hide();
+       //jQuery(".load").hide();
    },
    
    success:function(data){
       if(data.status == true){
        jQuery("#sendEmail").prop('disabled', true);
-       jQuery(".login-status").show();
-       jQuery(".login-status").html(data.message);
+       Toast.fire({
+        icon: 'success',
+        title: data.message
+      });
+      //  jQuery(".login-status").show();
+      //  jQuery(".login-status").html(data.message);
        if(data.data.values.user_type == "Customer" ){//check if session user_type is customer
         window.location = site_url+"/auth/customer/dashboard";//redirect to customer dashboard
         }else if(data.data.values.user_type == "Business" && data.data.values.is_business_verified == 0){//check if session user_type is business and is not verified
@@ -411,13 +589,21 @@ if(jQuery.trim(jQuery("#otp_code").val()) == ""){
           window.reload();
         }
       }else if(data.status == false){
-        jQuery(".login-status").hide();
-        jQuery(".login-alert-error").show();
-        jQuery(".login-alert-error").html(data.message);
+        Toast.fire({
+          icon: 'error',
+          title: data.message
+        });
+        // jQuery(".login-status").hide();
+        // jQuery(".login-alert-error").show();
+        // jQuery(".login-alert-error").html(data.message);
       }else{
-        jQuery(".login-status").hide();
-        jQuery(".login-alert-error").show();
-        jQuery(".login-alert-error").html(data);
+        Toast.fire({
+          icon: 'error',
+          title: data
+        });
+        // jQuery(".login-status").hide();
+        // jQuery(".login-alert-error").show();
+        // jQuery(".login-alert-error").html(data);
       }
         
    },
@@ -425,47 +611,79 @@ if(jQuery.trim(jQuery("#otp_code").val()) == ""){
    error:function(jqXHR, exception){
 
     if(jqXHR.status === 0){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Please check your internet connection.');	
+      Toast.fire({
+        icon: 'warning',
+        title: 'Please check your internet connection.'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Please check your internet connection.');	
      
     }else if(jqXHR.status == 404){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Request route not found.');
+      Toast.fire({
+        icon: 'info',
+        title: 'Request route not found.'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Request route not found.');
     }else if(jqXHR.status == 500){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Internal Server Error [500]');
+      Toast.fire({
+        icon: 'error',
+        title: 'Internal Server Error [500]'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Internal Server Error [500]');
       
     }else if(jqXHR.status == 400){
       var errors = jqXHR.responseJSON;
-jQuery(".login-status").hide();
-jQuery(".login-alert-error").fadeIn('slow');
-jQuery('.login-alert-error').html(errors.data.errors);
+      Toast.fire({
+        icon: 'error',
+        title: errors.data.errors
+      });
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
     }else if(jqXHR.status == 422){
       var errors = jqXHR.responseJSON;
 // $.each(json.responseJSON, function (key, value) {
 //     $('.'+key+'-error').html(value);
 // });
-jQuery(".login-status").hide();
-jQuery(".login-alert-error").fadeIn('slow');
-jQuery('.login-alert-error').html(errors.data.errors);
+Toast.fire({
+  icon: 'error',
+  title: errors.data.errors
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
 
     }else if(exception === 'parsererror'){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Requested JSON parse failed');
+      Toast.fire({
+        icon: 'info',
+        title: 'Requested JSON parse failed'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Requested JSON parse failed');
       
     }else if(exception === 'timeout'){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Time out error');
+      Toast.fire({
+        icon: 'info',
+        title: 'Request time out.'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Time out error');
       
     }else if(exception === 'abort'){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Ajax request aborted');
+      Toast.fire({
+        icon: 'info',
+        title: 'Ajax request aborted.'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Ajax request aborted');
       
     }
       
@@ -487,8 +705,12 @@ var email = jQuery("#email").val();
   
 if(jQuery.trim(jQuery("#email").val()) == ""){
   jQuery("#email").css('border', 'solid 1px #c03826');
-    jQuery(".login-alert-error").fadeIn('slow');
-    jQuery(".login-alert-error").html("Enter your email address");
+  Toast.fire({
+    icon: 'error',
+    title: 'Enter your email address'
+  });
+    // jQuery(".login-alert-error").fadeIn('slow');
+    // jQuery(".login-alert-error").html("Enter your email address");
 }else{
     jQuery.ajax({
     headers: {
@@ -499,12 +721,16 @@ if(jQuery.trim(jQuery("#email").val()) == ""){
     url: action,
     data: {"email": email},
     beforeSend:function(){
-      jQuery(".login-status").show();
-      jQuery('.login-alert-error').hide();
-      jQuery(".login-status").html("<div class='load'>Loading...</div>");
+      // jQuery(".login-status").show();
+      // jQuery('.login-alert-error').hide();
+      // jQuery(".login-status").html("<div class='load'>Loading...</div>");
+      Toast.fire({
+        icon: 'info',
+        title: 'Request processing...'
+      });
     },
     complete:function(){
-      jQuery(".load").hide();
+      // jQuery(".load").hide();
     },
    
     success:function(data){
@@ -512,21 +738,34 @@ if(jQuery.trim(jQuery("#email").val()) == ""){
         //jQuery('#register-btn').prop('disabled', true);
         //jQuery(".register-error").hide();
         //jQuery(".register-success").fadeIn('slow');
-        jQuery('.login-status').show();
-        jQuery('.login-status').html(data.message);
+        // jQuery('.login-status').show();
+        // jQuery('.login-status').html(data.message);
+
+        Toast.fire({
+          icon: 'success',
+          title: data.message
+        });
         
         jQuery("#recover-form").hide();
         jQuery('#otp-form').show();
         jQuery('#otp-form').html("\r\n<h3>Confirm OTP Code<\/h3><input type=\'hidden\' id=\'site_url\' name=\'site_url\' value=\'"+site_url+"\'><input type=\'hidden\' id=\'type\' name=\'type\' value=\'forgot_password\'><input type=\'hidden\' id=\'user_id\' name=\'user_id\' value=\'"+data.data.user.id+"\'><div><span class=\'wpcf7-form-control-wrap otp-code\'><input type=\'text\' id=\'otp_code\' class=\'wpcf7-form-control wpcf7-text wpcf7-validates-as-required\' placeholder=\'OTP Code\' name=\'otp_code\'><\/span><\/div> <div class=\'row\'><div class=\'col-lg-8\'> <div class=\'login-horizental\'><button class=\'button alt btn req-btn\' type=\'submit\'>Verify<\/button><\/div><\/div><\/div>\r\n");
           
       }else if(data.status == false){
-        jQuery(".login-status").hide();
-        jQuery(".login-alert-error").fadeIn('slow');
-        jQuery('.login-alert-error').html(data.message);	
+        Toast.fire({
+          icon: 'error',
+          title: data.message
+        });
+        // jQuery(".login-status").hide();
+        // jQuery(".login-alert-error").fadeIn('slow');
+        // jQuery('.login-alert-error').html(data.message);	
               }else{
-          jQuery(".login-status").hide();
-          jQuery(".login-alert-error").fadeIn('slow');
-          jQuery('.login-alert-error').html(data);
+                Toast.fire({
+                  icon: 'error',
+                  title: data
+                });
+          // jQuery(".login-status").hide();
+          // jQuery(".login-alert-error").fadeIn('slow');
+          // jQuery('.login-alert-error').html(data);
                         }
   },
 
@@ -534,42 +773,70 @@ if(jQuery.trim(jQuery("#email").val()) == ""){
   error:function(jqXHR, exception){
 
     if(jqXHR.status === 0){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Please check your internet connection.');	
+      Toast.fire({
+        icon: 'warning',
+        title: 'Please check your internet connection.'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Please check your internet connection.');	
      
     }else if(jqXHR.status == 404){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Request route not found.');
+      Toast.fire({
+        icon: 'info',
+        title: 'Request route not found.'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Request route not found.');
     }else if(jqXHR.status == 500){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Internal Server Error [500]');
+      Toast.fire({
+        icon: 'error',
+        title: 'Internal Server Error [500]'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Internal Server Error [500]');
       
     }else if(jqXHR.status == 422){
       var errors = jqXHR.responseJSON;
 // $.each(json.responseJSON, function (key, value) {
 //     $('.'+key+'-error').html(value);
 // });
-jQuery(".login-status").hide();
-jQuery(".login-alert-error").fadeIn('slow');
-jQuery('.login-alert-error').html(errors.data.errors);
+Toast.fire({
+  icon: 'error',
+  title: errors.data.errors
+});
+// jQuery(".login-status").hide();
+// jQuery(".login-alert-error").fadeIn('slow');
+// jQuery('.login-alert-error').html(errors.data.errors);
 
     }else if(exception === 'parsererror'){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Requested JSON parse failed');
+      Toast.fire({
+        icon: 'info',
+        title: 'Requested JSON parse failed'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Requested JSON parse failed');
       
     }else if(exception === 'timeout'){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Time out error');
+      Toast.fire({
+        icon: 'info',
+        title: 'Request time out'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Time out error');
       
     }else if(exception === 'abort'){
-      jQuery(".login-status").hide();
-      jQuery(".login-alert-error").fadeIn('slow');
-      jQuery('.login-alert-error').html('Ajax request aborted');
+      Toast.fire({
+        icon: 'info',
+        title: 'Ajax request aborted'
+      });
+      // jQuery(".login-status").hide();
+      // jQuery(".login-alert-error").fadeIn('slow');
+      // jQuery('.login-alert-error').html('Ajax request aborted');
       
     }
       

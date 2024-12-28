@@ -23,6 +23,156 @@ class ServiceController extends BaseController
      */
 
 
+     public function create_services(){
+        if(Auth::user()){
+        if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
+            $s_id = 1;
+          $status = 1;
+        $settings = Settings::where(function($p) use($s_id, $status){
+            $p->where('id', '=', $s_id);
+            $p->where('status', '=', $status);
+       })->get();
+            $service_category = ServiceCategory::orderBy('id', 'desc')->get();
+            $services = Services::orderBy('id', 'desc')->get();
+            $resort = Shelter::orderBy('id', 'desc')->get(); 
+            $myself = User::where('id', Auth::user()->id)->get();
+                return view('home.create_services', ['settings' => $settings, 'myselfs' => $myself, 'services' => $services, 'serviceCategories' => $service_category, 'resorts' => $resort]);
+    }else{
+        $settings = Settings::where('id', 1)->get();
+                $error = array("code" => "403",
+                               "title" => "Forbidden!",
+                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                               "link" => url('/') );
+                               return view('home.error', ['settings' => $settings, 'errors' => $error]);    
+    }
+            }else{
+                $settings = Settings::where('id', 1)->get();
+                $error = array("code" => "403",
+                               "title" => "Forbidden!",
+                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                               "link" => url('/') );
+                               return view('home.error', ['settings' => $settings, 'errors' => $error]); 
+    
+            }   
+    }
+    
+    
+    public function edit_service_img($id){
+        if(Auth::user()){
+        if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
+            $s_id = 1;
+          $status = 1;
+        $settings = Settings::where(function($p) use($s_id, $status){
+            $p->where('id', '=', $s_id);
+            $p->where('status', '=', $status);
+       })->get();
+            //$service_category = ServiceCategory::orderBy('id', 'desc')->get();
+            $services = Services::where('id', $id)->get();
+            $resort = Shelter::orderBy('id', 'desc')->get(); 
+            $myself = User::where('id', Auth::user()->id)->get();
+                return view('home.edit_service_img', ['settings' => $settings, 
+                                                     'myselfs' => $myself, 
+                                                     'services' => $services, 
+                                                     'serviceImages' => json_decode($services[0]->images), 
+                                                     'resorts' => $resort]);
+    }else{
+        $settings = Settings::where('id', 1)->get();
+                $error = array("code" => "403",
+                               "title" => "Forbidden!",
+                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                               "link" => url('/') );
+                               return view('home.error', ['settings' => $settings, 'errors' => $error]);    
+    }
+            }else{
+                $settings = Settings::where('id', 1)->get();
+                $error = array("code" => "403",
+                               "title" => "Forbidden!",
+                               "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                               "link" => url('/') );
+                               return view('home.error', ['settings' => $settings, 'errors' => $error]); 
+    
+            }   
+    }
+    
+    
+    
+    public function edit_service($id){
+        if(Auth::user()){
+            if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
+                $s_id = 1;
+              $status = 1;
+            $settings = Settings::where(function($p) use($s_id, $status){
+                $p->where('id', '=', $s_id);
+                $p->where('status', '=', $status);
+           })->get();
+                //$service_category = ServiceCategory::orderBy('id', 'desc')->get();
+                $services = Services::where('id', $id)->get();
+                $resort = Shelter::orderBy('id', 'desc')->get(); 
+                $myself = User::where('id', Auth::user()->id)->get();
+                    return view('home.edit_service', ['settings' => $settings, 
+                                                         'myselfs' => $myself, 
+                                                         'services' => $services, 
+                                                         'serviceImages' => json_decode($services[0]->images), 
+                                                         'resorts' => $resort]);
+        }else{
+            $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
+        }
+                }else{
+                    $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]); 
+        
+                }   
+    }
+    
+    
+    
+    public function service_admin_booking_entry($id){
+        if(Auth::user()){
+            if( Auth::user()->role == 1 || Auth::user()->user_type == "admin" || Auth::user()->user_type == "boat_owner" || Auth::user()->user_type == "yacht_owner"){
+                $s_id = 1;
+              $status = 1;
+            $settings = Settings::where(function($p) use($s_id, $status){
+                $p->where('id', '=', $s_id);
+                $p->where('status', '=', $status);
+           })->get();
+                //$service_category = ServiceCategory::orderBy('id', 'desc')->get();
+                $services = Services::where('id', $id)->get();
+                $resort = Shelter::orderBy('id', 'desc')->get(); 
+                $myself = User::where('id', Auth::user()->id)->get();
+                    return view('home.service_bookings', ['settings' => $settings, 
+                                                         'myselfs' => $myself, 
+                                                         'services' => $services, 
+                                                         'serviceImages' => json_decode($services[0]->images), 
+                                                         'resorts' => $resort]);
+        }else{
+            $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]);    
+        }
+                }else{
+                    $settings = Settings::where('id', 1)->get();
+                    $error = array("code" => "403",
+                                   "title" => "Forbidden!",
+                                   "message" => "You do not have the server privilage to this page! Be warned to avoid being disabled by the admin. Meanwhile, you can return to index page by clicking",
+                                   "link" => url('/') );
+                                   return view('home.error', ['settings' => $settings, 'errors' => $error]); 
+        
+                }   
+    }
+
+
     public function create_categories(Request $request){
         $input = $request->all();
         

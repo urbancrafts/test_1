@@ -10,6 +10,7 @@ use App\Http\Controllers\DateTimeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Models\Settings;
 
 class CustomerController extends BaseController
 {
@@ -23,30 +24,18 @@ class CustomerController extends BaseController
     protected $settings;
     public function __construct()
     {
-        $this->user = Auth::user();
-        $this->settings = Settings::first();
-        if($this->user){
-        if($this->user->user_type != "Customer"){
-            
-            $error = array("code" => "403",
-                   "title" => "Forbidden!",
-                   "message" => "You do not have the user privilage to this page! Meanwhile, you can return to index page by clicking",
-                   "link" => url('/') );
-                   return view('home.error', ['settings' => $this->settings, 'errors' => $error]);    
-        }
-    }else{
-        $error = array("code" => "403",
-        "title" => "Forbidden!",
-        "message" => "You do not have the user privilage to this page! Meanwhile, you can return to index page by clicking",
-        "link" => url('/') );
-        return view('home.error', ['settings' => $this->settings, 'errors' => $error]);    
+        $this->middleware('customer');
+    }
 
-    }
-    }
+    
 
     public function index()
     {
-        //
+        
+            $this->user = Auth::user();
+            return $this->user;
+        
+
     }
 
     /**

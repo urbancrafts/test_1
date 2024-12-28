@@ -15,7 +15,7 @@ class CreateRoomNumbersTable extends Migration
     {
         Schema::create('room_numbers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('number')->nullable();
+            $table->string('name')->nullable();
             $table->integer('capacity')->nullable();
             $table->string('status')->default('Ready');
             // $table->integer('resort_id')->nullable()->constrained('shelters')->onDelete('cascade')->onUpdate('cascade');

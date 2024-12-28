@@ -373,203 +373,14 @@ $(document).ready(function(){
 
 
 
-  function loadResortModal(id,name){
-  $("#modal-elemet").show();
-  $("#modal-elemet").html("\r\n<div class=\'modal-content \'><div class=\'modal-header\'><span class=\'close\'>&times;<\/span><h2>"+name+" Resort Image Uploads<\/h2><\/div><div class=\'modal-body\'> <form id=\'resort-image-upload-form\' action=\'{{ action('App\Http\Controllers\AjaxRequestController@resort_image_upload') }}\' method=\'post\' enctype=\'multipart form-data\'>  <input type=\'hidden\' id=\'resort\' name=\'resort\' value=\'"+id+"\' /> <div class=\'col-xs-12 image-container image-container-bi\' id=\'add-property-image-container\'><div><p>Images <span class=\'dim-size\'>Supported Formats JPG, JPEG, PNG 600 X 400 PX (Max 10 MB)<\/span><\/p><div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' name=\'images\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title2\' value=\'title2\'><input type=\'hidden\' name=\'main_image\' id=\'main-image2\' value=\'false\'><span class=\'help-block form-error\'>This is a required field<\/span><\/div>\r\n  <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title3\' value=\'title3\'><input type=\'hidden\' name=\'main_image\' id=\'main-image3\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title4\' value=\'title4\'><input type=\'hidden\' name=\'main_image\' id=\'main-image4\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title5\' value=\'title5\'><input type=\'hidden\' name=\'main_image\' id=\'main-image5\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title6\' value=\'title6\'><input type=\'hidden\' name=\'main_image\' id=\'main-image6\' value=\'false\'><\/div>\r\n <div class=\'col-xs-12 col-sm-4 col-md-2\'><input type=\'file\' class=\'uploadFile\' name=\'images\' accept=\'image\/x-png, image\/jpeg, image\/jpg\' data-validation-allowing=\'jpg, png, jpeg\'><div class=\'file-input-button text-center\' style=\'background-image: url(&quot;&quot;);\'><i class=\'fa fa-2x fa-plus-circle\' aria-hidden=\'true\'><\/i><\/div><h5 class=\'error-file-size\' style=\'display: none\'><\/h5><input type=\'hidden\' name=\'titles\' id=\'title7\' value=\'title7\'><input type=\'hidden\' name=\'main_image\' id=\'main-image7\' value=\'false\'><\/div>\r\n <\/div><\/div>\r\n <div class=\'box-footer clearfix\'><button type=\'submit\' class=\'pull-right btn btn-default\' id=\'sendEmail\'>Submit<i class=\'fa fa-arrow-circle-right\'><\/i><\/button><\/div><span class=\'alert alert-danger blog-alert-danger\' style=\'display: none\'><\/span><span class=\'alert alert-success blog-alert-success\' style=\'display: none\'><\/span> <\/form> <\/div> <div class=\'modal-footer\'><\/div><\/div>");
-}
+  
 
 
+  });
+
+  
 
 
-  $('form#resort-form').on('submit', function(e){
-e.preventDefault();
-var action = $(this).attr('action');
-//var uid = jQuery("#uid").val();
-//var name = jQuery("#name").val();
-//var title = jQuery("#title").val();
-//var content = jQuery("#blog-content").val();
-
-var formdata = new FormData(this);//create an instance for the form input fields
-
-if($.trim($('#name').val()) == ""){
-     $('#name').css('border', 'solid 1px red');
-     $('.resort-name-error').show();
-     $('.resort-name-error').html('*Required');
-}else if($.trim($('#price').val()) == ""){
-     $('#price').css('border', 'solid 1px red');
-     $('.resort-price-error').show();
-     $('.resort-price-error').html('(*Rwquired)');  
-}else if(!Number($('#price').val())){
-    $('#price').css('border', 'solid 1px red');
-     $('.resort-price-error').show();
-     $('.resort-price-error').html('(*numeric value required)');  
-}else if($.trim($('#location').val()) == ""){
-  $('#location').css('border', 'solid 1px red');
-  $('.resort-location-error').show();
-  $('.resort-location-error').html('*Required');
-}else{
-     $.ajax({
-          headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-       },
-         type: "POST",
-         dataType: "json",
-         url: action,
-         data: formdata,
-         cache: false,
-         contentType: false,
-         processData: false,
-         beforeSend:function(){
-             $(".blog-alert-success").show();
-             $('.blog-alert-danger').hide();
-             $(".blog-alert-success").html("<div class='load'>Loading...</div>");
-         },
-         complete:function(){
-             $(".load").hide();
-         },
-         error:function(){
-         $(".blog-alert-success").hide();
-         $(".blog-alert-danger").show();
-         $(".blog-alert-danger").html("Please check your internet connection");
-         },
-         success:function(data){
-            if(data.success == true){
-             $("#sendEmail").prop('disabled', true);
-             $(".blog-alert-success").show();
-             $(".blog-alert-success").html(data.message);
-             window.location = "{{ url('') }}/admin/edit_resort_img/"+data.data.id;           
-             //location.reload();
-             //loadResortModal(data.data.id,data.data.name);
-            }else if(data.success == false){
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data.message);
-            }else{
-              $(".blog-alert-success").hide();
-              $(".blog-alert-danger").show();
-              $(".blog-alert-danger").html(data);
-            }
-              
-         }
-         });
-
-}
-
-});
-
-$("#resort_feature_form").on('submit', function(e){
-e.preventDefault();
-
-var action = $(this).attr('action');
-//var uid = jQuery("#uid").val();
-//var name = jQuery("#name").val();
-//var title = jQuery("#title").val();
-//var content = jQuery("#blog-content").val();
-
-var formdata = new FormData(this);//create an instance for the form input fields
-
-if($.trim($('#resort-feature').val()) == ""){
-     $('#resort-feature').css('border', 'solid 1px red');
-     $('.resort-feature-error').show();
-}else{
-     $.ajax({
-          headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-       },
-         type: "POST",
-         dataType: "json",
-         url: action,
-         data: formdata,
-         cache: false,
-         contentType: false,
-         processData: false,
-         beforeSend:function(){
-             $(".blog-alert-success1").show();
-             $('.blog-alert-danger1').hide();
-             $(".blog-alert-success1").html("<div class='load'>Loading...</div>");
-         },
-         complete:function(){
-             $(".load").hide();
-         },
-         error:function(){
-         $(".blog-alert-success1").hide();
-         $(".blog-alert-danger1").show();
-         $(".blog-alert-danger1").html("Please check your internet connection");
-         },
-         success:function(data){
-            if(data.success == true){
-             $("#sendEmail").prop('disabled', true);
-             $(".blog-alert-success1").show();
-             $(".blog-alert-success1").html(data.message);
-             location.reload();
-             //loadResortModal(data.data.id,data.data.name);
-            }else if(data.success == false){
-              $(".blog-alert-success1").hide();
-              $(".blog-alert-danger1").show();
-              $(".blog-alert-danger1").html(data.message);
-            }else{
-              $(".blog-alert-success1").hide();
-              $(".blog-alert-danger1").show();
-              $(".blog-alert-danger1").html(data);
-            }
-              
-         }
-         });
-
-}
-
-});
-
-});
-
-function deleteFeatures(fid,feature){
-  $query = confirm("Do you want to remove "+feature+" from the list?");
-  if($query == true){
-    $.ajax({
-          headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-       },
-         type: "POST",
-         dataType: "json",
-         url: "{{ action('App\Http\Controllers\ResortController@remove_resort_feature') }}",
-         data: {'feature_id': fid, 'feature_name': feature}, 
-         beforeSend:function(){
-             $(".blog-alert-success1").show();
-             $('.blog-alert-danger1').hide();
-             $(".blog-alert-success1").html("<div class='load'>Loading...</div>");
-         },
-         complete:function(){
-             $(".load").hide();
-         },
-         error:function(){
-         $(".blog-alert-success1").hide();
-         $(".blog-alert-danger1").show();
-         $(".blog-alert-danger1").html("Please check your internet connection");
-         },
-         success:function(data){
-            if(data.success == true){
-             $("#sendEmail").prop('disabled', true);
-             $(".blog-alert-success1").show();
-             $(".blog-alert-success1").html(data.message);
-             location.reload();
-             //loadResortModal(data.data.id,data.data.name);
-            }else if(data.success == false){
-              $(".blog-alert-success1").hide();
-              $(".blog-alert-danger1").show();
-              $(".blog-alert-danger1").html(data.message);
-            }else{
-              $(".blog-alert-success1").hide();
-              $(".blog-alert-danger1").show();
-              $(".blog-alert-danger1").html(data);
-            }
-              
-         }
-         });
-
-  }else{
-    
-  }
-}
 
 function removeImg(boat, key){
 
@@ -636,7 +447,8 @@ if(str == true){
     
 		@include('inc.header2')
 
-    @include('inc.dashboard-side-bar2')
+  @include('inc.business-sidebar')
+
 
 
 
@@ -646,9 +458,10 @@ if(str == true){
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <h1>
-        Boat
-        <small>Edit {{$boats[0]->title}}</small>
+        Business Account
+        <small>Boat owner: {{$boats[0]->model}}</small>
       </h1>
+      
       
     </section>
 

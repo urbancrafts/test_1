@@ -49,8 +49,16 @@ class Shelter extends Model
     }
 
 
+    // public function business_account(){
+    //     return $this->belongsTo(BusinessDetail::class, 'business_id', 'id');
+    // }
+
     public function business_detail(){
         return $this->belongsTo(BusinessDetail::class, 'business_id', 'id');
+    }
+
+    public function features(){
+        return $this->hasMany(ResortFeatures::class, 'resort_id', 'id');
     }
 
     public function rooms(){

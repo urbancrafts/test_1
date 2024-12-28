@@ -12,6 +12,7 @@ use App\Mail\VerifyOTPMail;
 use App\Mail\PasswordResetOTPMail;
 use App\Mail\PasswordResetMail;
 use App\Mail\WelcomeMail;
+use App\Mail\CustomerWelcomeMail;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\DateTimeController;
 use Illuminate\Support\Facades\Auth;
@@ -148,6 +149,7 @@ public function verify_email_code(Request $request)
         $verificationCheck = UserVerification::getSingleEmailCode($user_id, $code);
 
 
+        
         if(!$verificationCheck){
             // sorry the code doesnt exist in our records 
             $this->result->status = false;
@@ -208,20 +210,20 @@ public function verify_email_code(Request $request)
                             'status' => 'Active', 
                             'loggedIn' => true
                         ]);
-                        setcookie("user_id", $this->user->id, strtotime( '+30 days' ), "/", "", "", TRUE);
-                        setcookie("first_name", $this->user->first_name, strtotime( '+30 days' ), "/", "", "", TRUE);
-                        setcookie("last_name", $this->user->last_name, strtotime( '+30 days' ), "/", "", "", TRUE);
-                        setcookie("phone", $this->user->phone, strtotime( '+30 days' ), "/", "", "", TRUE);
-                        setcookie("email", $this->user->email, strtotime( '+30 days' ), "/", "", "", TRUE);
-                        setcookie("user_type", $this->user->user_type, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        // setcookie("user_id", $this->user->id, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        // setcookie("first_name", $this->user->first_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        // setcookie("last_name", $this->user->last_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        // setcookie("phone", $this->user->phone, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        // setcookie("email", $this->user->email, strtotime( '+30 days' ), "/", "", "", TRUE);
+                        // setcookie("user_type", $this->user->user_type, strtotime( '+30 days' ), "/", "", "", TRUE);
                         $user_data = User::where('id', $this->user->id)->get();
                         UserVerification::delete_code($this->user->id, $code);
 
                         if($this->user->user_type == "Business"){//check if the session user_type is business
                             
-                        if($type = "email_verification"){//check if request type param is email_verification
+                        if($type == "email_verification"){//check if request type param is email_verification
                         Mail::to($this->user->email)->send(new WelcomeMail($user_data[0]));//send a business welcome mail
-                        }else if($type = "forgot_password"){//check if request type param is forgot_password
+                        }else if($type == "forgot_password"){//check if request type param is forgot_password
                         Mail::to($this->user->email)->send(new PasswordResetMail($user_data[0]));//send password reset instruction mail
                         }
                         }else if($this->user->user_type == "Customer"){//check if session user_type is customer
@@ -231,9 +233,9 @@ public function verify_email_code(Request $request)
                                 'point_balance' => 0
                             ]);//create record for customer reward point table with zero(0) value
                             //Send a welcome mail to customer
-                        if($type = "email_verification"){//check if request type param is email_verification
+                        if($type == "email_verification"){//check if request type param is email_verification
                         Mail::to($this->user->email)->send(new CustomerWelcomeMail($user_data[0]));//send a customer welcome mail
-                        }else if($type = "forgot_password"){//check if request type param is forgot_password
+                        }else if($type == "forgot_password"){//check if request type param is forgot_password
                         Mail::to($this->user->email)->send(new PasswordResetMail($user_data[0]));//send password reset instruction mail
                         }    
                     }
@@ -268,15 +270,15 @@ public function verify_email_code(Request $request)
         //Request is validated
         $user = User::where('email', $request->email)->first();
 
-        if($user->is_email_verified == 0){
+        if($user && $user->is_email_verified == 0){
 
             Mail::to($request->email)->send(new VerifyOTPMail($user));
 
             return response_data(false, 401, "Please enter an OTP code sent to your mail.", ['values' => $user], false, false);
             // return response_data(true, 422, "Verify your mail code", false, false, false);
-        }else if($user->status == "Suspended"){
+        }else if($user && $user->status == "Suspended"){
             return response_data(false, 422, "Your account was suspended please contact the help centre for more help", false, false, false);
-        }else if($user->status == "Blocked"){
+        }else if($user && $user->status == "Blocked"){
             return response_data(false, 422, "Your account has been blocked by the admin. For more information, contact the help centre.", false, false, false);
         }
 
@@ -294,12 +296,12 @@ public function verify_email_code(Request $request)
 
 
         $update_user = User::where('id', $this->user->id)->update(['loggedIn' => true]);
-        setcookie("user_id", $this->user->id, strtotime( '+30 days' ), "/", "", "", TRUE);
-        setcookie("first_name", $this->user->first_name, strtotime( '+30 days' ), "/", "", "", TRUE);
-        setcookie("last_name", $this->user->last_name, strtotime( '+30 days' ), "/", "", "", TRUE);
-        setcookie("phone", $this->user->phone, strtotime( '+30 days' ), "/", "", "", TRUE);
-        setcookie("email", $this->user->email, strtotime( '+30 days' ), "/", "", "", TRUE);
-        setcookie("user_type", $this->user->user_type, strtotime( '+30 days' ), "/", "", "", TRUE);
+        // setcookie("user_id", $this->user->id, strtotime( '+30 days' ), "/", "", "", TRUE);
+        // setcookie("first_name", $this->user->first_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+        // setcookie("last_name", $this->user->last_name, strtotime( '+30 days' ), "/", "", "", TRUE);
+        // setcookie("phone", $this->user->phone, strtotime( '+30 days' ), "/", "", "", TRUE);
+        // setcookie("email", $this->user->email, strtotime( '+30 days' ), "/", "", "", TRUE);
+        // setcookie("user_type", $this->user->user_type, strtotime( '+30 days' ), "/", "", "", TRUE);
 
         //DeviceLoginController::check_device_loggedin($this->user->email, 'login');
 

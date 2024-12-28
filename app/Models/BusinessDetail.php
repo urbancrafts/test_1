@@ -15,6 +15,8 @@ class BusinessDetail extends Model
         'owner_first_name',
         'owner_last_name',
         'business_name',
+        'email',
+        'phone',
         'country',
         'state',
         'city',
@@ -53,13 +55,11 @@ class BusinessDetail extends Model
 
     public function business(){
         if(self::first()->business_category == "Resort"){
-            return $this->hasMany(Shelter::class);
+            return $this->hasMany(Shelter::class, 'business_id', 'id');
         }else if(self::first()->business_category == "Boat"){
-            return $this->hasMany(Boat::class);
-        }else if(self::first()->business_category == "Beauty & Spar"){
-            return $this->hasMany(Sevices::class);
-        }else if(self::first()->business_category == "Health & Fitness"){
-            return $this->hasMany(Sevices::class);
+            return $this->hasMany(Boat::class, 'business_id', 'id');
+        }else if(self::first()->business_category == "Other Services"){
+            return $this->hasMany(Sevices::class, 'business_id', 'id');
         }
     }
 
@@ -75,5 +75,7 @@ class BusinessDetail extends Model
     public function services(){
         return $this->hasMany(Services::class, 'business_id', 'id');
     }
+
+    
 
 }

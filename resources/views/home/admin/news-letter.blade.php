@@ -94,8 +94,8 @@
     
 		@include('inc.header2')
 
-    @include('inc.dashboard-side-bar2')
-
+  @include('inc.admin-sidebar')
+  
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->

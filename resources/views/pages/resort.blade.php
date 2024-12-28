@@ -424,12 +424,12 @@ if(jQuery.trim(jQuery("#author-name").val()) =="" ){
         
             <ul>
                 @if(count($features) > 0)
-                @if($features[0]->features)
-                @foreach ($feature_list as $feature)
+                
+                @foreach ($features as $feature)
                 <li>{{$feature}}</li>
                 @endforeach
                 @endif
-                @endif
+              
                 </ul>
 
         </div>

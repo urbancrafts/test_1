@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Charges;
 use App\Models\Content;
 use App\Models\Country;
+use App\Models\State;
+use App\Models\City;
 use App\Models\Gallery;
 use App\Models\Settings;
 use App\Models\Statistic;
@@ -39,7 +41,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\ Mail;
+use Illuminate\Support\Facades\Mail;
 use Intervention\Image\ImageManagerStatic as Image;
 class AjaxRequestController extends BaseController
 {
@@ -52,6 +54,75 @@ class AjaxRequestController extends BaseController
     {
         //
     }
+
+
+
+    public function fetch_states_and_cities($country_id){
+        $states = State::where('country_id', $country_id)->get();
+        if(count($states) > 0){
+           $array_data = array();
+           foreach($states as $data){
+
+               $data['cities'] = $data->city()->get();
+               //$data['product_discount'] = $product[0]->product_discount()->get();
+       
+               array_push($array_data, $data);
+           }
+           return $array_data;
+        }else{
+           return false;
+        }
+    }
+
+
+    public function fetch_countries(){
+        $country = Country::all();
+        if(count($country) > 0){
+           $array_data = array();
+        //    foreach($country as $data){
+
+        //        $data['states'] = $data->state()->get();
+        //        //$data['product_discount'] = $product[0]->product_discount()->get();
+       
+        //        array_push($array_data, $data);
+        //    }
+           return response_data(true, 200, 'Country data fetched.', ['values' => $country], false, false);
+        }else{
+            return response_data(false, 422, "There's no record to fetch", false, false, false);
+        }
+    }
+
+
+
+    public function populate_states_by_country($country_id){
+        $states = State::where('country_id', $country_id)->get();
+        if(count($states) > 0){
+           $array_data = array();
+        //    foreach($states as $data){
+
+        //        $data['cities'] = $data->city()->get();
+        //        //$data['product_discount'] = $product[0]->product_discount()->get();
+       
+        //        array_push($array_data, $data);
+        //    }
+           return response_data(true, 200, 'Country states data fetched.', ['values' => $states], false, false);
+        }else{
+            return response_data(false, 422, "There's no record to fetch", false, false, false);
+        }
+    }
+
+
+    public function populate_cities_by_state($state_id){
+        $city = City::where('state_id', $state_id)->get();
+        if(count($city) > 0){
+           return response_data(true, 200, 'State cities data fetched.', ['values' => $city], false, false);
+        }else{
+            return response_data(false, 422, "There's no record to fetch", false, false, false);
+        }
+    }
+
+
+
 
 
     public function load_resort_rooms(Request $request){
@@ -448,10 +519,7 @@ public function post_service(Request $request){
 }
 
 
-public function update_index_slide(Request $request){
-          $service  = SlideFeatures::where('id', $request->input('uid'))->update(['updated' => 1]);
-          return $this->sendResponse($service, 'Service updated succesfully.'); 
-}
+
 
 public function load_content(Request $request){
     $input = $request->all();
@@ -531,40 +599,7 @@ public function update_content(Request $request){
                     return $this->sendResponse($content, 'Content updated.');  
 }
 
-public function create_user(Request $request){
-    $input = $request->all();
 
-    $validator = Validator::make($input, [
-        'name' => 'required',
-        'email' => 'required',
-        'phone' => 'required',
-        'admin-type' => 'required',
-        'pass' => 'required',
-            
-    ]);
-
-    if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
-    }
-    
-    
-    $user = new User;
-
-    $user->name = $request->input('name');
-    $user->phone = $request->input('phone');
-    $user->email = $request->input('email');
-    $user->password = bcrypt($request->input('pass'));
-    $user->role = $request->input('admin-type');
-    $user->user_type = 'admin';
-    $user->admin = Auth::user()->id;
-    $user->save();
-
-    Storage::makeDirectory('public/img/users/'.$user->id, 0775);
-    Storage::makeDirectory('public/img/users/'.$user->id.'/profile', 0775);
-    Storage::makeDirectory('public/img/users/'.$user->id.'/blog', 0775);
-
-    return $this->sendResponse($user, $user->name.' account created succesfully.'); 
-}
 
 
 public function upload_profile_image(Request $request){
@@ -676,96 +711,7 @@ public function profile_change_password(Request $request){
 }
 
 
-public function update_settings(Request $request){
 
-    $input = $request->all();
-
-    $validator = Validator::make($input, [
-        'curr' => 'nullable',
-        'lang' => 'nullable',
-        'tel' => 'nullable',
-        'mobile' => 'nullable',
-        'email' => 'nullable',
-        'address' => 'nullable',
-        'payment-type' => 'nullable',
-        'discount' => 'nullable',
-        'credit' => 'nullable',
-        'mem_fee' => 'nullable',
-        'fb' => 'nullable',
-        'insta' => 'nullable',
-        'twitter' => 'nullable',
-        'site-name' => 'nullable',
-        'status' => 'nullable',
-        'logo' => 'image|nullable|max:1999',
-        'icon' => 'image|nullable|max:1999', 
-            
-    ]);
-
-    if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
-    }
-
-    
-    
-    if($request->hasFile('logo')){
-        //get filename with the extension
-        $fileNameWithExt = $request->file('logo')->getClientOriginalName();
-        //get just filename
-        $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-        //get just ext
-        $extension = $request->file('logo')->getClientOriginalExtension();
-        //filename to store
-        $fileNameToStore = $filename.'_'.time().'.'.$extension;
-        $path = $request->file('logo')->storeAs('public/img/site_logo', $fileNameToStore);
-
-        }else{
-        $fileNameToStore = "";
-        }
-
-        if($request->hasFile('icon')){
-            //get filename with the extension
-            $fileNameWithExt = $request->file('icon')->getClientOriginalName();
-            //get just filename
-            $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-            //get just ext
-            $extension = $request->file('icon')->getClientOriginalExtension();
-            //filename to store
-            $fileNameToStore2 = $filename.'_'.time().'.'.$extension;
-            $path = $request->file('icon')->storeAs('public/img/site_icon', $fileNameToStore2);
-    
-            }else{
-            $fileNameToStore2 = "";
-            }
-
-                    $settings = Settings::find(1);
-                    $settings->curr = $request->input('curr');
-                    if($fileNameToStore != ""){
-                        $settings->logo = $fileNameToStore;   
-                    }
-                    if($fileNameToStore2 !=""){
-                        $settings->icon = $fileNameToStore2;
-                    }
-                    $settings->language = $request->input('lang');
-                    $settings->tel = $request->input('tel');
-                    $settings->mobile = $request->input('mobile');
-                    $settings->email = $request->input('email');
-                    $settings->mobile = $request->input('mobile');
-                    $settings->email = $request->input('email');
-                    $settings->address = $request->input('address');
-                    $settings->payment_type = $request->input('payment-type');
-                    $settings->memb_discount = $request->input('discount');
-                    $settings->memb_debt_capacity = $request->input('credit');
-                    $settings->membership_fee = $request->input('mem_fee');
-                    $settings->facebook = $request->input('fb');
-                    $settings->instagram = $request->input('insta');
-                    $settings->twitter = $request->input('email');
-                    
-                    $settings->site_name = $request->input('site-name');
-                    $settings->status = $request->input('status');
-                    $settings->save();
-                    return $this->sendResponse($settings, 'Site settings updated.');  
-
-}
 
 public function delete_user(Request $request){
     $user = User::find($request->input('uid'));
@@ -779,11 +725,7 @@ public function delete_service(Request $request){
     return $this->sendResponse($services, 'Service deleted.');
 }
 
-public function delete_service_slide(Request $request){
-    $services = SlideFeatures::find($request->input('uid'));
-    $services->delete();
-    return $this->sendResponse($services, 'Service deleted.');
-}
+
 
 
 
@@ -1278,8 +1220,6 @@ public function count_cart_item(Request $request){
 
 
 public function load_resort_data(Request $request){
-
-
     $input = $request->all();
             
                 $validator = Validator::make($input, [
@@ -1291,9 +1231,7 @@ public function load_resort_data(Request $request){
                 if($validator->fails()){
                     return $this->sendError('Validation Error.', $validator->errors());       
                 }
-                  
-                
-                
+                   
                 $resorts = Shelter::orderBy('id', 'desc')->limit($request->input('record_per_page'),$request->input('start'))->get();
 
                 if(count($resorts) > 0){
@@ -1998,204 +1936,10 @@ public function post_msg(Request $request){
 }
 
 
-public function load_slider_category(Request $request){
-    $input = $request->all();
-
-    $validator = Validator::make($input, [
-        'category' => 'required',
-    ]);
-
-    if($validator->fails()){
-        return $this->sendError('Validation Error.', $validator->errors());       
-    }
-
-    $data = "";
-    if($request->input('category') == "Shop"){
-     $store = StoreItem::orderBy('id', 'desc')->get();
-     foreach($store as $service){
-        $data .= "<li class='item'>
-                      
-        <div class='product-img'>
-          <img src='".$service->img_1."' alt='".$service->item_name."'>
-        </div>
-        <div class='product-info'>
-          <a href='#' class='product-title'>".$service->item_name."
-            <span class='label label-warning pull-right'>
-            
-                Shop
-            
-            </span></a>
-          
-              
-           <a href='#' class='fa fa-plus del-btn' onclick='addServiceSlide(this)' data-id='".$service->id."' data-cat='".$request->input('category')."' title='Add ".$service->item_name."'>Add to slide</a>
-           
-        </div>
-      </li>";
-    }
-
-    }else if($request->input('category') == "Resort"){
-    $resort = Shelter::orderBy('id', 'desc')->get();
-    foreach($resort as $service){
-        $data .= "<li class='item'>
-                      
-        <div class='product-img'>
-          <img src='".$service->img_1."' alt='".$service->name."'>
-        </div>
-        <div class='product-info'>
-          <a href='#' class='product-title'>".$service->name."
-            <span class='label label-warning pull-right'>
-            
-                Resort
-            
-            </span></a>
-          
-              
-           <a href='#' class='fa fa-plus del-btn' onclick='addServiceSlide(this)' data-id='".$service->id."' data-cat='".$request->input('category')."' title='Add ".$service->name."'>Add to slide</a>
-           
-        </div>
-      </li>";
-    }
-
-    }else if($request->input('category') == "Others"){
-    $services = Services::orderBy('id', 'desc')->get();
-    
-    foreach($services as $service){
-     $data .= "<li class='item'>
-                   
-     <div class='product-img'>
-       <img src='".$service->img_1."' alt='".$service->title."'>
-     </div>
-     <div class='product-info'>
-       <a href='#' class='product-title'>".$service->title."
-         <span class='label label-warning pull-right'>
-         
-             ".$service->category."
-         
-         </span></a>
-       
-           
-        <a href='#' class='fa fa-plus del-btn' onclick='addServiceSlide(this)' data-id='".$service->id."' data-cat='".$request->input('category')."' title='Add ".$service->title."'>Add to slide</a>
-        
-     </div>
-   </li>";
-    }
-
-    }else if($request->input('category') == "Boat"){
-
-        $services = Boat::orderBy('id', 'desc')->get();
-    
-    foreach($services as $service){
-     $data .= "<li class='item'>
-                   
-     <div class='product-img'>
-       <img src='".$service->img_1."' alt='".$service->title."'>
-     </div>
-     <div class='product-info'>
-       <a href='#' class='product-title'>".$service->title."
-         <span class='label label-warning pull-right'>
-         
-             ".$service->category."
-         
-         </span></a>
-       
-           
-        <a href='#' class='fa fa-plus del-btn' onclick='addServiceSlide(this)' data-id='".$service->id."' data-cat='".$request->input('category')."' title='Add ".$service->title."'>Add to slide</a>
-        
-     </div>
-   </li>";
-
-    }
-}
-    return $this->sendResponse($data, 'Slide content loaded.'); 
-}
 
 
-public function add_to_slide(Request $request){
-    $input = $request->all();
 
-    $validator = Validator::make($input, [
-        'category' => 'required',
-        'id' => 'required',
-    ]);
 
-    if($validator->fails()){
-        return $this->showErrorMsg('Validation Error.', $validator->errors());       
-    }
-    
-    $id = $request->input('id');
-    $cat = $request->input('category');
-
-    $slide = SlideFeatures::where(function($p) use($id, $cat){
-        $p->where('ref_id', '=', $id);
-        $p->where('category', '=', $cat);
-   })->get();
-
-   if(count($slide) > 0){
-    return $this->showErrorMsg($slide[0]->name.' is already added to the slide', $slide);       
-   }else{
-     if($cat == "Shop"){
-        $store = StoreItem::where('id', $id)->get();
-
-        $img = $store[0]->img_1;
-
-        $url = url('shop/'.$store[0]->category.'/'.$store[0]->id);
-        
-        $new_slide = new SlideFeatures;
-        $new_slide->ref_id = $store[0]->id;
-        $new_slide->category = $cat;
-        $new_slide->name = $store[0]->item_name;
-        $new_slide->img_url = $img;
-        $new_slide->url = $url;
-        $new_slide->save();
-     }else if($cat == "Resort"){
-         $resort = Shelter::where('id', $id)->get();
-        
-         $img = $resort[0]->img_1;
-
-         $url = url('resorts/resort/'.$resort[0]->id);
-
-        $new_slide = new SlideFeatures;
-        $new_slide->ref_id = $resort[0]->id;
-        $new_slide->category = $cat;
-        $new_slide->name = $resort[0]->name;
-        $new_slide->img_url = $img;
-        $new_slide->url = $url;
-        $new_slide->save();
-     }else if($cat == "Others"){
-         $services = Services::where('id', $id)->get();
-         
-         $img = $services[0]->img_1;
-
-         $url = url('services/service/'.$services[0]->id);
-
-        $new_slide = new SlideFeatures;
-        $new_slide->ref_id = $services[0]->id;
-        $new_slide->category = $cat;
-        $new_slide->name = $services[0]->title;
-        $new_slide->img_url = $img;
-        $new_slide->url = $url;
-        $new_slide->save();
-     }else if($cat == "Boat"){
-        $services = Boat::where('id', $id)->get();
-         
-        $img = $services[0]->img_1;
-
-        $url = url('boats/boat/'.$services[0]->id);
-
-       $new_slide = new SlideFeatures;
-       $new_slide->ref_id = $services[0]->id;
-       $new_slide->category = $cat;
-       $new_slide->name = $services[0]->title;
-       $new_slide->img_url = $img;
-       $new_slide->url = $url;
-       $new_slide->save();
-     }
-
-     return $this->sendResponse($new_slide, 'Added succesfully'); 
-   }
-
-    
-}
 
 
 ################################################################
